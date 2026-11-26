@@ -72,6 +72,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: kakaotalk-theme-apk
-          path: ${{ runner.temp }}/theme-project/app/build/outputs/apk/debug/*.apk
+          path: ${{ runner.temp }}/theme-project/**/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 1
