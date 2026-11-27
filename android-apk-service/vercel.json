@@ -1,5 +1,6 @@
 {
   "buildCommand": "npm run build",
+  "outputDirectory": "public",
   "functions": {
     "api/session.mjs": {
       "includeFiles": "{worker.py,project.py,template.zip,dist/**}",
