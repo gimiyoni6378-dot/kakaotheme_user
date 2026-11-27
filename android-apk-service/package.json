@@ -2,6 +2,9 @@
   "name": "kakaotheme-apk-service",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "test": "node --test tests/session.test.js"
   },

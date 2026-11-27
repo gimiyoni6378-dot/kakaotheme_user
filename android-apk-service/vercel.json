@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/session.js": {
+    "api/session.mjs": {
       "includeFiles": "{worker.py,project.py,template.zip}",
       "maxDuration": 60
     }

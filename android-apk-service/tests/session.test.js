@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Sandbox } from '@vercel/sandbox';
-import handler from '../api/session.js';
+import handler from '../api/session.mjs';
 
 function response() {
   return { headers: {}, statusCode: 200, payload: null,
