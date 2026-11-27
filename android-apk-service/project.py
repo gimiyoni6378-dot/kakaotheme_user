@@ -103,12 +103,11 @@ def prepare_project(archive_path, workdir):
                 validate_resource(name, data, original)
             files[name] = data
         if DESIGN_FILE in names:
-            if design['version'] == 2:
-                expected_size = struct.pack('>II', SPEC['bubble']['width'] * 3 + 2, SPEC['bubble']['height'] * 3 + 2)
-                for name, data in files.items():
-                    if re.fullmatch(r'src/main/theme/drawable-xxhdpi/theme_chatroom_bubble_(me|you)_0[12]_image\.9\.png', name):
-                        if data[16:24] != expected_size:
-                            raise ValueError('공통 템플릿의 Android 말풍선 이미지가 아닙니다. 페이지를 새로고침해주세요.')
+            expected_size = struct.pack('>II', SPEC['bubble']['width'] * 3 + 2, SPEC['bubble']['height'] * 3 + 2)
+            for name, data in files.items():
+                if re.fullmatch(r'src/main/theme/drawable-xxhdpi/theme_chatroom_bubble_(me|you)_0[12]_image\.9\.png', name):
+                    if data[16:24] != expected_size:
+                        raise ValueError('공통 템플릿의 Android 말풍선 이미지가 아닙니다. 페이지를 새로고침해주세요.')
             apply_design(files, design)
         workdir.mkdir(parents=True, exist_ok=True)
         for name, data in files.items():

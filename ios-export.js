@@ -1,18 +1,448 @@
-// iOS adapter: official CSS and 2x/3x PNG resources only.
-async function fitUserImage(templateData,imageData){return commonBackground(imageData)}
-async function recolorPng(data,color){const img=new Image();img.src=data;await img.decode();const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(img,0,0);const im=x.getImageData(0,0,c.width,c.height),d=im.data,[r,g,b]=rgba(color);for(let i=0;i<d.length;i+=4){if(d[i+3]===0)continue;const lum=.299*d[i]+.587*d[i+1]+.114*d[i+2],k=.28+.72*(lum/255);d[i]=Math.round(r*k);d[i+1]=Math.round(g*k);d[i+2]=Math.round(b*k)}x.putImageData(im,0,0);return canvasBlob(c)}
-async function solidPng(data,color){const im=new Image();im.src=data;await im.decode();const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.fillStyle=color;x.fillRect(0,0,c.width,c.height);return canvasBlob(c)}
-async function neutralProfile(data,v){const im=new Image();im.src=data;await im.decode();const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.fillStyle=v.accent;x.fillRect(0,0,c.width,c.height);x.fillStyle=v.main;x.beginPath();x.arc(c.width/2,c.height*.36,c.width*.14,0,Math.PI*2);x.fill();x.beginPath();x.ellipse(c.width/2,c.height*.82,c.width*.3,c.height*.31,0,Math.PI,Math.PI*2);x.fill();return canvasBlob(c)}
-function iosBubbleCanvas(scale,fill,border,style){const spec=THEME_DESIGN.spec.bubble,c=document.createElement('canvas');c.width=Math.round(spec.width*scale);c.height=Math.round(spec.height*scale);const x=c.getContext('2d'),stroke=spec.strokeWidth*scale,pad=stroke/2;x.beginPath();x.roundRect(pad,pad,c.width-stroke,c.height-stroke,Math.max(0,spec.styles[style].radius*scale-stroke/2));x.fillStyle=fill;x.fill();x.lineWidth=stroke;x.strokeStyle=border;x.stroke();return c}
-async function cleanBubble(data,fill,border,style){const im=new Image();im.src=data;await im.decode();return canvasBlob(iosBubbleCanvas(im.naturalHeight/THEME_DESIGN.spec.bubble.height,fill,border,style))}
-async function iosTabAsset(data,type,selected,v){const im=new Image();im.src=data;await im.decode();const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.textAlign='center';x.textBaseline='middle';x.fillStyle=selected?v.ink:v.accent;x.font=`${Math.round(c.height*(type==='More'?.34:.52))}px Arial`;x.fillText(TAB_GLYPHS[type],c.width/2,c.height*.31);x.fillStyle=v.ink;x.font=`500 ${Math.round(c.height*.25)}px -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif`;x.fillText(TAB_LABELS[type],c.width/2,c.height*.81,c.width*.9);return canvasBlob(c)}
-async function themeIcon(data,v){const im=new Image();im.src=data;await im.decode();const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.fillStyle=v.main;x.fillRect(0,0,c.width,c.height);x.fillStyle=v.send;x.strokeStyle=v.accent;x.lineWidth=Math.max(2,c.width*.018);x.beginPath();x.roundRect(c.width*.14,c.height*.18,c.width*.65,c.height*.38,c.width*.1);x.fill();x.stroke();x.beginPath();x.moveTo(c.width*.32,c.height*.54);x.lineTo(c.width*.25,c.height*.67);x.lineTo(c.width*.47,c.height*.54);x.fill();x.fillStyle=v.receive;x.beginPath();x.roundRect(c.width*.35,c.height*.46,c.width*.51,c.height*.34,c.width*.1);x.fill();x.stroke();return canvasBlob(c)}
-async function passcodeDot(data,color,filled){const im=new Image();im.src=data;await im.decode();const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.beginPath();x.arc(c.width/2,c.height/2,c.width*.24,0,Math.PI*2);x.fillStyle=filled?color:'rgba(255,255,255,0.35)';x.fill();x.lineWidth=Math.max(2,c.width*.025);x.strokeStyle=color;x.stroke();return canvasBlob(c)}
-function setBlock(css,selector,updates){const re=new RegExp('('+selector+'\\s*\\{)([\\s\\S]*?)(\\})');return css.replace(re,(_,a,body,z)=>{for(const [prop,val] of Object.entries(updates)){const p=prop.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\$&'),rx=new RegExp('(^|\\n)(\\s*'+p+'\\s*:\\s*)([^;]*)(;)','m');if(rx.test(body))body=body.replace(rx,(_,n,k)=>n+k+val+';');else body+='\n    '+prop+': '+val+';'}return a+body+z})}
-function themeId(name){const slug=safeName(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'custom';let h=2166136261;for(const ch of name){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return 'com.talktheme.studio.'+slug+'-'+(h>>>0).toString(36)}
-function themeCss(v){let c=window.SAMPLE_THEME_CSS;if(!c)throw Error('공식 샘플 CSS가 로드되지 않았습니다.');const replacements=[[/(-kakaotalk-theme-name:\s*)'[^']*'/,`$1'${v.name.replace(/['\\]/g,'')}'`],[/-kakaotalk-author-name:\s*'[^']*'/,"-kakaotalk-author-name: 'TalkTheme Studio'"],[/-kakaotalk-theme-id:\s*'[^']*'/,"-kakaotalk-theme-id: '"+themeId(v.name)+"'"]];for(const [re,to] of replacements)c=c.replace(re,to);c=c.replace(/-kakaotalk-theme-version:\s*'[^']*'/,"-kakaotalk-theme-version: '"+THEME_DESIGN.spec.version+".0."+(v.buildVersion||THEME_DESIGN.snapshot(v).buildVersion)+"'");const spec=THEME_DESIGN.spec,sets=Object.fromEntries(Object.entries(spec.ios.styles).map(([selector,props])=>[selector,Object.fromEntries(Object.entries(props).map(([key,value])=>[key,THEME_DESIGN.resolve(value,v)]))]));for(const [role,selector] of [['send','MessageCellStyle-Send'],['receive','MessageCellStyle-Receive']]){const padding=THEME_DESIGN.padding(role,'px',['top','left','bottom','right']);sets[selector]['-ios-title-edgeinsets']=padding;sets[selector]['-ios-group-title-edgeinsets']=padding};for(const [k,u] of Object.entries(sets))c=setBlock(c,k,u);c=c.replace(/(-ios-(?:selected-|group-|group-selected-)?background-image:\s*'chatroomBubble[^']+\.png')\s+\d+px\s+\d+px;/g,(_,ref)=>ref+' '+spec.bubble.stretch.x+'px '+spec.bubble.stretch.y+'px;');c=c.replace(/-ios-background-image:\s*'chatroomBgImage\.png';/g,'').replace(/-ios-background-image:\s*'mainBgImage\.png';/g,'').replace(/-ios-background-image:\s*'passcodeBgImage\.png';/g,'');c=c.replace(/-ios-background-image:\s*'maintabBgImage\.png';/g,'');if(v.images?.chat?.data)c=c.replace('BackgroundStyle-ChatRoom\n{','BackgroundStyle-ChatRoom\n{\n    -ios-background-image: \'chatroomBgImage.png\';');return c}
-async function assertCenterColor(entry,color){const blob=entry.data instanceof Blob?entry.data:new Blob([entry.data]);const bmp=await createImageBitmap(blob),c=document.createElement('canvas');c.width=bmp.width;c.height=bmp.height;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bmp,0,0);const px=x.getImageData(Math.floor(c.width/2),Math.floor(c.height/2),1,1).data,[r,g,b]=rgba(color);if(Math.abs(px[0]-r)>1||Math.abs(px[1]-g)>1||Math.abs(px[2]-b)>1||px[3]<250)throw Error('이미지 색상이 미리보기 설정과 다릅니다: '+entry.name);bmp.close()}
-async function validateThemeEntries(entries,v){const byName=new Map(entries.map(e=>[e.name,e]));if(!byName.has('KakaoTalkTheme.css')||![...byName.keys()].some(n=>n.startsWith('Images/')))throw Error('테마 CSS 또는 Images 폴더가 없습니다.');if([...byName.keys()].some(n=>n.startsWith('/')||n.includes('..')||n.includes('__MACOSX')||n.includes('.DS_Store')||n.includes('/._')))throw Error('압축에 허용되지 않는 경로 또는 메타데이터가 있습니다.');const names=[...byName.keys()].filter(n=>n.startsWith('Images/')).map(n=>n.slice(7));const missing=Object.keys(window.THEME_FILES).filter(n=>!names.includes(n));if(missing.length)throw Error('샘플 이미지 누락: '+missing.slice(0,3).join(', '));const css=new TextDecoder().decode(byName.get('KakaoTalkTheme.css').data);for(const color of [v.bg,v.main,v.accent,v.ink])if(!css.toLowerCase().includes(color.toLowerCase()))throw Error('선택한 색상이 CSS에 반영되지 않았습니다: '+color);const refs=[...css.matchAll(/-ios-[\w-]*image\s*:\s*'([^']+\.png)'/g)].map(m=>m[1]);for(const ref of refs){const base=ref.replace(/\.png$/,'');if(!names.some(n=>n===ref||n.startsWith(base+'@')))throw Error('CSS 이미지 참조가 패키지에 없습니다: '+ref)}for(const e of entries){if(e.name.endsWith('.png')){const data=e.data instanceof Blob?new Uint8Array(await e.data.arrayBuffer()):e.data;if(data[0]!==137||data[1]!==80||data[2]!==78||data[3]!==71)throw Error('PNG 리소스가 손상되었습니다: '+e.name)}}for(const e of entries){const n=e.name.slice(7);if(n.startsWith('chatroomBubbleSend'))await assertCenterColor(e,v.send);else if(n.startsWith('chatroomBubbleReceive'))await assertCenterColor(e,v.receive);else if(n==='chatroomBgImage@3x.png'||n==='passcodeBgImage@3x.png'){if(!(n==='chatroomBgImage@3x.png'&&v.images?.chat?.data))await assertCenterColor(e,v.bg);}else if(n==='mainBgImage@3x.png'||n==='maintabBgImage@2x.png'||n==='maintabBgImage@3x.png')await assertCenterColor(e,v.main)}return{fileCount:entries.length,images:names.length,cssReferences:refs.length}}
-async function buildKtheme(v=current()){v=THEME_DESIGN.snapshot(v);if(!window.THEME_FILES||!window.SAMPLE_THEME_CSS)throw Error('공식 샘플 파일을 읽지 못했습니다.');const entries=[{name:'KakaoTalkTheme.css',data:new TextEncoder().encode(themeCss(v))}];const assets=window.THEME_FILES;for(const [name,data] of Object.entries(assets)){let image;if(name==='chatroomBgImage@3x.png'&&v.images?.chat?.data)image=await fitUserImage(data,v.images.chat.data);else if(name==='chatroomBgImage@3x.png'||name==='mainBgImage@3x.png'||name==='maintabBgImage@2x.png'||name==='maintabBgImage@3x.png'||name==='passcodeBgImage@3x.png')image=await solidPng(data,name.startsWith('chatroom')||name.startsWith('passcode')?v.bg:v.main);else if(name==='commonIcoTheme.png')image=await themeIcon(data,v);else if(name.startsWith('findBtnAddFriend@'))image=await glyphAsset(data,'+',v.accent);else if(name==='profileImg01@3x.png')image=await neutralProfile(data,v);else if(/^maintabIco/.test(name)){const type=Object.keys(TAB_GLYPHS).find(k=>name.includes(k))||'More',selected=name.includes('Selected');image=await iosTabAsset(data,type,selected,v)}else if(/^chatroomBubble(Send|Receive)/.test(name)){const color=name.includes('Send')?v.send:v.receive;image=await cleanBubble(data,color,v.accent,v.bubbleStyle)}else if(/^passcodeImgCode/.test(name)){const filled=name.includes('Selected');image=await passcodeDot(data,v.accent,filled)}else if(name==='passcodeKeypadPressed@3x.png')image=await solidPng(data,v.accent);else image=await fetch(data).then(r=>r.arrayBuffer()).then(b=>new Uint8Array(b));entries.push({name:'Images/'+name,data:image})}const report=await validateThemeEntries(entries,v);const zip=await createZip(entries);const archiveCheck=await verifyZip(zip,entries);if(zip.size<1000)throw Error('생성된 테마 압축 파일 크기가 비정상적으로 작습니다.');return{zip,report,archiveCheck,name:safeName(v.name)}}
-async function makeKtheme(v=current()){const result=await buildKtheme(v);download(result.zip,result.name+'.ktheme');toast(`패키지 확인 완료 · ${result.report.images}개 이미지 · ZIP ${result.archiveCheck.fileCount}개 파일 검증`)}
-window.IOS_THEME_EXPORTER={features:["color.bg","color.main","color.accent","color.send","color.receive","color.ink","bubble.square","bubble.rounded","chat.image"],build:buildKtheme,download:makeKtheme};
+(() => {
+  // iOS adapter: official CSS and 2x/3x PNG resources only.
+  async function glyphAsset(data, glyph, color) {
+    const im = new Image();
+    im.src = data;
+    await im.decode();
+    const c = document.createElement("canvas");
+    c.width = im.naturalWidth;
+    c.height = im.naturalHeight;
+    const x = c.getContext("2d");
+    x.clearRect(0, 0, c.width, c.height);
+    x.fillStyle = color;
+    x.textAlign = "center";
+    x.textBaseline = "middle";
+    x.font = `${Math.round(c.height * (glyph === "•••" ? 0.29 : 0.43))}px Arial`;
+    x.fillText(glyph, c.width / 2, c.height * 0.5);
+    return canvasBlob(c);
+  }
+  async function solidPng(data, color) {
+    const im = new Image();
+    im.src = data;
+    await im.decode();
+    const c = document.createElement("canvas");
+    c.width = im.naturalWidth;
+    c.height = im.naturalHeight;
+    const x = c.getContext("2d");
+    x.fillStyle = color;
+    x.fillRect(0, 0, c.width, c.height);
+    return canvasBlob(c);
+  }
+  async function neutralProfile(data, v) {
+    const im = new Image();
+    im.src = data;
+    await im.decode();
+    const c = document.createElement("canvas");
+    c.width = im.naturalWidth;
+    c.height = im.naturalHeight;
+    const x = c.getContext("2d");
+    x.fillStyle = v.accent;
+    x.fillRect(0, 0, c.width, c.height);
+    x.fillStyle = v.main;
+    x.beginPath();
+    x.arc(c.width / 2, c.height * 0.36, c.width * 0.14, 0, Math.PI * 2);
+    x.fill();
+    x.beginPath();
+    x.ellipse(
+      c.width / 2,
+      c.height * 0.82,
+      c.width * 0.3,
+      c.height * 0.31,
+      0,
+      Math.PI,
+      Math.PI * 2,
+    );
+    x.fill();
+    return canvasBlob(c);
+  }
+  function iosBubbleCanvas(scale, fill, border, style) {
+    const spec = THEME_DESIGN.spec.bubble,
+      c = document.createElement("canvas");
+    c.width = Math.round(spec.width * scale);
+    c.height = Math.round(spec.height * scale);
+    const x = c.getContext("2d"),
+      stroke = spec.strokeWidth * scale,
+      pad = stroke / 2;
+    x.beginPath();
+    x.roundRect(
+      pad,
+      pad,
+      c.width - stroke,
+      c.height - stroke,
+      Math.max(0, spec.styles[style].radius * scale - stroke / 2),
+    );
+    x.fillStyle = fill;
+    x.fill();
+    x.lineWidth = stroke;
+    x.strokeStyle = border;
+    x.stroke();
+    return c;
+  }
+  async function cleanBubble(data, fill, border, style) {
+    const im = new Image();
+    im.src = data;
+    await im.decode();
+    return canvasBlob(
+      iosBubbleCanvas(
+        im.naturalHeight / THEME_DESIGN.spec.bubble.height,
+        fill,
+        border,
+        style,
+      ),
+    );
+  }
+  // iOS custom tab assets include the label, so reserve separate icon and text areas.
+  async function iosTabAsset(data, type, selected, v) {
+    const im = new Image();
+    im.src = data;
+    await im.decode();
+    const c = document.createElement("canvas");
+    c.width = im.naturalWidth;
+    c.height = im.naturalHeight;
+    const x = c.getContext("2d");
+    x.textAlign = "center";
+    x.textBaseline = "middle";
+    x.fillStyle = selected ? v.ink : v.accent;
+    x.font = `${Math.round(c.height * (type === "More" ? 0.34 : 0.52))}px Arial`;
+    x.fillText(TAB_GLYPHS[type], c.width / 2, c.height * 0.31);
+    x.fillStyle = v.ink;
+    x.font = `500 ${Math.round(c.height * 0.25)}px -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif`;
+    x.fillText(TAB_LABELS[type], c.width / 2, c.height * 0.81, c.width * 0.9);
+    return canvasBlob(c);
+  }
+  async function themeIcon(data, v) {
+    const im = new Image();
+    im.src = data;
+    await im.decode();
+    const c = document.createElement("canvas");
+    c.width = im.naturalWidth;
+    c.height = im.naturalHeight;
+    const x = c.getContext("2d");
+    x.fillStyle = v.main;
+    x.fillRect(0, 0, c.width, c.height);
+    x.fillStyle = v.send;
+    x.strokeStyle = v.accent;
+    x.lineWidth = Math.max(2, c.width * 0.018);
+    x.beginPath();
+    x.roundRect(
+      c.width * 0.14,
+      c.height * 0.18,
+      c.width * 0.65,
+      c.height * 0.38,
+      c.width * 0.1,
+    );
+    x.fill();
+    x.stroke();
+    x.beginPath();
+    x.moveTo(c.width * 0.32, c.height * 0.54);
+    x.lineTo(c.width * 0.25, c.height * 0.67);
+    x.lineTo(c.width * 0.47, c.height * 0.54);
+    x.fill();
+    x.fillStyle = v.receive;
+    x.beginPath();
+    x.roundRect(
+      c.width * 0.35,
+      c.height * 0.46,
+      c.width * 0.51,
+      c.height * 0.34,
+      c.width * 0.1,
+    );
+    x.fill();
+    x.stroke();
+    return canvasBlob(c);
+  }
+  async function passcodeDot(data, color, filled) {
+    const im = new Image();
+    im.src = data;
+    await im.decode();
+    const c = document.createElement("canvas");
+    c.width = im.naturalWidth;
+    c.height = im.naturalHeight;
+    const x = c.getContext("2d");
+    x.clearRect(0, 0, c.width, c.height);
+    x.beginPath();
+    x.arc(c.width / 2, c.height / 2, c.width * 0.24, 0, Math.PI * 2);
+    x.fillStyle = filled ? color : "rgba(255,255,255,0.35)";
+    x.fill();
+    x.lineWidth = Math.max(2, c.width * 0.025);
+    x.strokeStyle = color;
+    x.stroke();
+    return canvasBlob(c);
+  }
+  function setBlock(css, selector, updates) {
+    const re = new RegExp("(" + selector + "\\s*\\{)([\\s\\S]*?)(\\})");
+    return css.replace(re, (_, a, body, z) => {
+      for (const [prop, val] of Object.entries(updates)) {
+        const p = prop.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&"),
+          rx = new RegExp("(^|\\n)(\\s*" + p + "\\s*:\\s*)([^;]*)(;)", "m");
+        if (rx.test(body))
+          body = body.replace(rx, (_, n, k) => n + k + val + ";");
+        else body += "\n    " + prop + ": " + val + ";";
+      }
+      return a + body + z;
+    });
+  }
+  function themeId(name) {
+    const slug =
+      safeName(name)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "custom";
+    let h = 2166136261;
+    for (const ch of name) {
+      h ^= ch.charCodeAt(0);
+      h = Math.imul(h, 16777619);
+    }
+    return "com.talktheme.studio." + slug + "-" + (h >>> 0).toString(36);
+  }
+  function themeCss(v) {
+    let c = window.SAMPLE_THEME_CSS;
+    if (!c) throw Error("공식 샘플 CSS가 로드되지 않았습니다.");
+    const replacements = [
+      [
+        /(-kakaotalk-theme-name:\s*)'[^']*'/,
+        `$1'${v.name.replace(/['\\]/g, "")}'`,
+      ],
+      [
+        /-kakaotalk-author-name:\s*'[^']*'/,
+        "-kakaotalk-author-name: 'TalkTheme Studio'",
+      ],
+      [
+        /-kakaotalk-theme-id:\s*'[^']*'/,
+        "-kakaotalk-theme-id: '" + themeId(v.name) + "'",
+      ],
+    ];
+    for (const [re, to] of replacements) c = c.replace(re, to);
+    c = c.replace(
+      /-kakaotalk-theme-version:\s*'[^']*'/,
+      "-kakaotalk-theme-version: '" +
+        THEME_DESIGN.spec.version +
+        ".0." +
+        (v.buildVersion || THEME_DESIGN.snapshot(v).buildVersion) +
+        "'",
+    );
+    const spec = THEME_DESIGN.spec,
+      sets = Object.fromEntries(
+        Object.entries(spec.ios.styles).map(([selector, props]) => [
+          selector,
+          Object.fromEntries(
+            Object.entries(props).map(([key, value]) => [
+              key,
+              THEME_DESIGN.resolve(value, v),
+            ]),
+          ),
+        ]),
+      );
+    for (const [role, selector] of [
+      ["send", "MessageCellStyle-Send"],
+      ["receive", "MessageCellStyle-Receive"],
+    ]) {
+      const padding = THEME_DESIGN.padding(role, "px", [
+        "top",
+        "left",
+        "bottom",
+        "right",
+      ]);
+      sets[selector]["-ios-title-edgeinsets"] = padding;
+      sets[selector]["-ios-group-title-edgeinsets"] = padding;
+    }
+    for (const [k, u] of Object.entries(sets)) c = setBlock(c, k, u);
+    c = c.replace(
+      /(-ios-(?:selected-|group-|group-selected-)?background-image:\s*'chatroomBubble[^']+\.png')\s+\d+px\s+\d+px;/g,
+      (_, ref) =>
+        ref +
+        " " +
+        spec.bubble.stretch.x +
+        "px " +
+        spec.bubble.stretch.y +
+        "px;",
+    );
+    c = c
+      .replace(/-ios-background-image:\s*'chatroomBgImage\.png';/g, "")
+      .replace(/-ios-background-image:\s*'mainBgImage\.png';/g, "")
+      .replace(/-ios-background-image:\s*'passcodeBgImage\.png';/g, "");
+    c = c.replace(/-ios-background-image:\s*'maintabBgImage\.png';/g, "");
+    if (v.images?.chat?.data)
+      c = c.replace(
+        "BackgroundStyle-ChatRoom\n{",
+        "BackgroundStyle-ChatRoom\n{\n    -ios-background-image: 'chatroomBgImage.png';",
+      );
+    return c;
+  }
+  async function assertCenterColor(entry, color) {
+    const blob =
+      entry.data instanceof Blob ? entry.data : new Blob([entry.data]);
+    const bmp = await createImageBitmap(blob),
+      c = document.createElement("canvas");
+    c.width = bmp.width;
+    c.height = bmp.height;
+    const x = c.getContext("2d", { willReadFrequently: true });
+    x.drawImage(bmp, 0, 0);
+    const px = x.getImageData(
+        Math.floor(c.width / 2),
+        Math.floor(c.height / 2),
+        1,
+        1,
+      ).data,
+      [r, g, b] = rgba(color);
+    if (
+      Math.abs(px[0] - r) > 1 ||
+      Math.abs(px[1] - g) > 1 ||
+      Math.abs(px[2] - b) > 1 ||
+      px[3] < 250
+    )
+      throw Error("이미지 색상이 미리보기 설정과 다릅니다: " + entry.name);
+    bmp.close();
+  }
+  async function validateThemeEntries(entries, v) {
+    const byName = new Map(entries.map((e) => [e.name, e]));
+    if (
+      !byName.has("KakaoTalkTheme.css") ||
+      ![...byName.keys()].some((n) => n.startsWith("Images/"))
+    )
+      throw Error("테마 CSS 또는 Images 폴더가 없습니다.");
+    if (
+      [...byName.keys()].some(
+        (n) =>
+          n.startsWith("/") ||
+          n.includes("..") ||
+          n.includes("__MACOSX") ||
+          n.includes(".DS_Store") ||
+          n.includes("/._"),
+      )
+    )
+      throw Error("압축에 허용되지 않는 경로 또는 메타데이터가 있습니다.");
+    const names = [...byName.keys()]
+      .filter((n) => n.startsWith("Images/"))
+      .map((n) => n.slice(7));
+    const missing = Object.keys(window.THEME_FILES).filter(
+      (n) => !names.includes(n),
+    );
+    if (missing.length)
+      throw Error("샘플 이미지 누락: " + missing.slice(0, 3).join(", "));
+    const css = new TextDecoder().decode(byName.get("KakaoTalkTheme.css").data);
+    for (const color of [v.bg, v.main, v.accent, v.ink])
+      if (!css.toLowerCase().includes(color.toLowerCase()))
+        throw Error("선택한 색상이 CSS에 반영되지 않았습니다: " + color);
+    const refs = [
+      ...css.matchAll(/-ios-[\w-]*image\s*:\s*'([^']+\.png)'/g),
+    ].map((m) => m[1]);
+    for (const ref of refs) {
+      const base = ref.replace(/\.png$/, "");
+      if (!names.some((n) => n === ref || n.startsWith(base + "@")))
+        throw Error("CSS 이미지 참조가 패키지에 없습니다: " + ref);
+    }
+    for (const e of entries) {
+      if (e.name.endsWith(".png")) {
+        const data =
+          e.data instanceof Blob
+            ? new Uint8Array(await e.data.arrayBuffer())
+            : e.data;
+        if (
+          data[0] !== 137 ||
+          data[1] !== 80 ||
+          data[2] !== 78 ||
+          data[3] !== 71
+        )
+          throw Error("PNG 리소스가 손상되었습니다: " + e.name);
+      }
+    }
+    for (const e of entries) {
+      const n = e.name.slice(7);
+      if (n.startsWith("chatroomBubbleSend"))
+        await assertCenterColor(e, v.send);
+      else if (n.startsWith("chatroomBubbleReceive"))
+        await assertCenterColor(e, v.receive);
+      else if (
+        n === "chatroomBgImage@3x.png" ||
+        n === "passcodeBgImage@3x.png"
+      ) {
+        if (!(n === "chatroomBgImage@3x.png" && v.images?.chat?.data))
+          await assertCenterColor(e, v.bg);
+      } else if (
+        n === "mainBgImage@3x.png" ||
+        n === "maintabBgImage@2x.png" ||
+        n === "maintabBgImage@3x.png"
+      )
+        await assertCenterColor(e, v.main);
+    }
+    return {
+      fileCount: entries.length,
+      images: names.length,
+      cssReferences: refs.length,
+    };
+  }
+  async function buildKtheme(v) {
+    v = THEME_DESIGN.snapshot(v);
+    if (!window.THEME_FILES || !window.SAMPLE_THEME_CSS)
+      throw Error("공식 샘플 파일을 읽지 못했습니다.");
+    const entries = [
+      {
+        name: "KakaoTalkTheme.css",
+        data: new TextEncoder().encode(themeCss(v)),
+      },
+    ];
+    const assets = window.THEME_FILES;
+    for (const [name, data] of Object.entries(assets)) {
+      let image;
+      if (name === "chatroomBgImage@3x.png" && v.images?.chat?.data)
+        image = await commonBackground(v.images.chat.data);
+      else if (
+        name === "chatroomBgImage@3x.png" ||
+        name === "mainBgImage@3x.png" ||
+        name === "maintabBgImage@2x.png" ||
+        name === "maintabBgImage@3x.png" ||
+        name === "passcodeBgImage@3x.png"
+      )
+        image = await solidPng(
+          data,
+          name.startsWith("chatroom") || name.startsWith("passcode")
+            ? v.bg
+            : v.main,
+        );
+      else if (name === "commonIcoTheme.png") image = await themeIcon(data, v);
+      else if (name.startsWith("findBtnAddFriend@"))
+        image = await glyphAsset(data, "+", v.accent);
+      else if (name === "profileImg01@3x.png")
+        image = await neutralProfile(data, v);
+      else if (/^maintabIco/.test(name)) {
+        const type =
+            Object.keys(TAB_GLYPHS).find((k) => name.includes(k)) || "More",
+          selected = name.includes("Selected");
+        image = await iosTabAsset(data, type, selected, v);
+      } else if (/^chatroomBubble(Send|Receive)/.test(name)) {
+        const color = name.includes("Send") ? v.send : v.receive;
+        image = await cleanBubble(data, color, v.accent, v.bubbleStyle);
+      } else if (/^passcodeImgCode/.test(name)) {
+        const filled = name.includes("Selected");
+        image = await passcodeDot(data, v.accent, filled);
+      } else if (name === "passcodeKeypadPressed@3x.png")
+        image = await solidPng(data, v.accent);
+      else
+        image = await fetch(data)
+          .then((r) => r.arrayBuffer())
+          .then((b) => new Uint8Array(b));
+      entries.push({ name: "Images/" + name, data: image });
+    }
+    const report = await validateThemeEntries(entries, v);
+    const zip = await createZip(entries);
+    const archiveCheck = await verifyZip(zip, entries);
+    if (zip.size < 1000)
+      throw Error("생성된 테마 압축 파일 크기가 비정상적으로 작습니다.");
+    return { zip, report, archiveCheck, name: safeName(v.name) };
+  }
+  window.IOS_THEME_EXPORTER = {
+    features: [
+      "color.bg",
+      "color.main",
+      "color.accent",
+      "color.send",
+      "color.receive",
+      "color.ink",
+      "bubble.square",
+      "bubble.rounded",
+      "chat.image",
+    ],
+    build: buildKtheme,
+  };
+})();

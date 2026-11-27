@@ -30,6 +30,7 @@ jobs:
           node --check android-project.js
           node --check theme-utils.js
           npm ci
+          npm run format:check
           npm test
           node --check android-export.js
           npm ci --prefix android-apk-service
