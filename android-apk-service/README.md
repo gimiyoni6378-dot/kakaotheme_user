@@ -35,7 +35,7 @@ GitHub Pages는 정적 파일만 제공하므로 APK 컴파일은 별도 서버�
 ## 빌드와 데이터 처리
 
 - SDK `@vercel/sandbox` 5.x의 Ubuntu universal 이미지를 사용합니다. JDK 21, SDK 35, Build Tools 35.0.0, Gradle 8.10.2, AGP 8.7.2, Kotlin 1.9.25를 사용합니다. 초기 빌드는 도구와 의존성을 다운로드하므로 수 분이 걸릴 수 있습니다.
-- 원본 Android 26.10.0 샘플을 기반으로 한 `template.zip`에 루트 프로젝트 이름과 Kotlin JVM 대상 설정을 보완했습니다. `namespace`와 Kotlin 패키지는 원본 값을 유지하고, 설치 식별자 `applicationId`만 테마 이름에 따라 변경합니다. 소스 manifest의 불필요한 `package` 속성은 제거했습니다.
+- 원본 Android 26.10.0 샘플을 기반으로 한 `template.zip`에 루트 프로젝트 이름과 Kotlin JVM 대상 설정을 보완했습니다. `namespace`와 Kotlin 패키지는 원본 값을 유지하고, 설치 식별자 `applicationId`만 테마 이름에 따라 변경합니다. 소스 manifest의 불필요한 `package` 속성은 제거하고, Release lint에서 누락으로 판정되는 `theme_maintab_cell_image`의 기본 밀도 리소스를 추가했습니다.
 - `project.py`는 파일 목록과 빌드 스크립트/래퍼/매니페스트/코드를 서버 템플릿과 대조합니다. 정해진 색상, 이름, 같은 크기의 PNG 변경만 허용합니다. 업로드한 Gradle 코드나 임의 파일을 실행하지 않습니다. 업로드는 10MB, 압축 해제 총량은 24MB로 제한합니다.
 - 샘플은 `app/` 하위 모듈이 없는 **루트 앱 모듈**입니다. `assembleRelease` 결과는 `build/outputs/apk/release`에 생성됩니다. `zipalign` → 운영키 `apksigner sign` → `apksigner verify` 후에만 다운로드를 엽니다.
 - 세션별 무작위 토큰이 업로드·상태·다운로드에 필요합니다. 다운로드 링크에도 토큰이 포함되므로 공유하지 마세요. 요청 경로는 worker 로그에 기록하지 않습니다.
@@ -52,7 +52,7 @@ npm test
 python -m unittest discover -s tests -v
 ```
 
-Node 테스트는 출처/사전 요청/비활성화/동일 인스턴스 요청 제한/세션 생성·실패 정리를 검증합니다. Python 테스트는 프로젝트 코드 변조/경로 조작/중복 ZIP/XML 엔티티/색상·PNG 크기 및 HTTP 인증·만료·다운로드를 검증합니다. 실제 APK 컴파일 및 휴대폰 적용 확인은 별도입니다.
+Node 테스트는 출처/사전 요청/비활성화/동일 인스턴스 요청 제한/세션 생성·실패 정리를 검증합니다. Python 테스트는 프로젝트 코드 변조/경로 조작/중복 ZIP/XML 엔티티/색상·PNG 크기 및 HTTP 인증·만료·다운로드를 검증합니다. GitHub Actions는 Linux worker의 도구 설치부터 Release 빌드·임시 테스트키 서명·서명 검증까지 실행합니다. 이 테스트키는 운영에 사용하지 않습니다. 실제 휴대폰 적용 확인은 별도입니다.
 
 ## 참고
 
