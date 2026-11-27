@@ -5,6 +5,7 @@ import struct
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
+from bubbles import DESIGN_FILE, parse_design, apply_design
 
 TEMPLATE = Path(__file__).with_name('template.zip')
 MAX_UPLOAD = 10 * 1024 * 1024
@@ -64,7 +65,10 @@ def prepare_project(archive_path, workdir):
     with zipfile.ZipFile(TEMPLATE) as template, zipfile.ZipFile(archive_path) as uploaded:
         infos = uploaded.infolist()
         names = [i.filename for i in infos]
-        if len(infos) != len(set(names)) or set(names) != set(template.namelist()):
+        expected = set(template.namelist())
+        if DESIGN_FILE in names:
+            expected.add(DESIGN_FILE)
+        if len(infos) != len(set(names)) or set(names) != expected:
             raise ValueError('공식 템플릿과 파일 구성이 다릅니다.')
         if sum(i.file_size for i in infos) > MAX_EXPANDED:
             raise ValueError('프로젝트 크기가 허용 범위를 넘었습니다.')
@@ -78,6 +82,9 @@ def prepare_project(archive_path, workdir):
             if info.file_size > MAX_UPLOAD:
                 raise ValueError('파일이 너무 큽니다.')
             data = uploaded.read(info)
+            if name == DESIGN_FILE:
+                design = parse_design(data)
+                continue
             original = template.read(name)
             if name == 'build.gradle.kts':
                 text = data.decode('utf-8')
@@ -91,6 +98,8 @@ def prepare_project(archive_path, workdir):
             else:
                 validate_resource(name, data, original)
             files[name] = data
+        if DESIGN_FILE in names:
+            apply_design(files, design)
         workdir.mkdir(parents=True, exist_ok=True)
         for name, data in files.items():
             destination = workdir / name

@@ -37,7 +37,7 @@ export default async function handler(req, res) {
 
   let sandbox;
   try {
-    const [worker, project, template] = await Promise.all(['worker.py', 'project.py', 'template.zip'].map(name => readFile(fileURLToPath(new URL('../' + name, import.meta.url)))));
+    const [worker, project, template, bubbles] = await Promise.all(['worker.py', 'project.py', 'template.zip', 'bubbles.py'].map(name => readFile(fileURLToPath(new URL('../' + name, import.meta.url)))));
     const token = randomBytes(32).toString('base64url');
     const expiresAt = Date.now() + 25 * 60 * 1000;
     sandbox = await Sandbox.create({
@@ -59,6 +59,7 @@ export default async function handler(req, res) {
     await sandbox.writeFiles([
       { path: '/vercel/sandbox/worker.py', content: worker },
       { path: '/vercel/sandbox/project.py', content: project },
+      { path: '/vercel/sandbox/bubbles.py', content: bubbles },
       { path: '/vercel/sandbox/template.zip', content: template },
       { path: '/vercel/sandbox/signing.jks', content: Buffer.from(process.env.APK_KEYSTORE_BASE64, 'base64') }
     ]);
@@ -75,7 +76,7 @@ export default async function handler(req, res) {
       await new Promise(resolve => setTimeout(resolve, 400));
     }
     if (!ready) throw new Error('빌드 서버를 시작하지 못했습니다. 다시 시도해주세요.');
-    return res.status(200).json({ builderUrl: baseUrl, token, expiresAt });
+    return res.status(200).json({ builderUrl: baseUrl, token, expiresAt, bubbleRendererVersion: 2 });
   } catch (error) {
     if (sandbox) await sandbox.stop().catch(() => {});
     console.error('Android build session initialization failed:', error);

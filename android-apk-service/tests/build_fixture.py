@@ -1,5 +1,6 @@
 """Exercise the real Linux worker: toolchain, release build, sign and verify."""
 import os
+import json
 import secrets
 import sys
 import tempfile
@@ -29,6 +30,9 @@ try:
                 if name == 'build.gradle.kts':
                     data = data.replace(b'com.kakao.talk.theme.template', b'com.talktheme.studio.cifixture')
                 output.writestr(name, data)
+            output.writestr('talktheme-bubbles.json', json.dumps({
+                'version': 1, 'style': 'wave', 'send': '#D8E6D3',
+                'receive': '#FFFFFF', 'border': '#50775B'}))
         worker.JOBS['ci'] = {'stage': 'start', 'done': False, 'error': None}
         worker.build('ci', archive, root / 'project')
         job = worker.JOBS['ci']
