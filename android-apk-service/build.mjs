@@ -4,7 +4,7 @@ import { build } from 'esbuild';
 // together so no cross-format package require remains at invocation time.
 await build({
   entryPoints: ['src/session.mjs'],
-  outfile: 'api/session.mjs',
+  outfile: 'dist/session.mjs',
   bundle: true,
   platform: 'node',
   target: 'node24',

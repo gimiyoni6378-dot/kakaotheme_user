@@ -4,7 +4,7 @@ GitHub Pages는 정적 파일만 제공하므로 APK 컴파일은 별도 서버�
 
 ## 처음 배포할 때
 
-1. Vercel에 이 GitHub 저장소를 연결하고 **Root Directory를 `android-apk-service`**, Framework Preset을 **Other**로 지정합니다. 대시보드의 Build Command와 Output Directory override는 비워 둡니다. Node.js 24를 사용합니다. `npm ci`로 의존성을 설치합니다. `vercel.json`의 빌드 명령이 `src/session.mjs`와 SDK 의존성을 `api/session.mjs`로 번들링합니다. SDK 내부의 CommonJS/ESM 혼용이 Vercel 함수 로더에서 충돌하는 것을 방지합니다.
+1. Vercel에 이 GitHub 저장소를 연결하고 **Root Directory를 `android-apk-service`**, Framework Preset을 **Other**로 지정합니다. 대시보드의 Build Command와 Output Directory override는 비워 둡니다. Node.js 24를 사용합니다. `npm ci`로 의존성을 설치합니다. `vercel.json`의 빌드 명령이 `src/session.mjs`와 SDK 의존성을 `dist/session.mjs`로 번들링하고 `api/session.mjs`가 이를 내보냅니다. SDK 내부의 CommonJS/ESM 혼용이 Vercel 함수 로더에서 충돌하는 것을 방지합니다.
 2. JDK 21의 `keytool`로 **운영용 서명키를 한 번만** 만듭니다. 아래 명령은 암호를 대화식으로 입력받습니다. keystore 암호와 key 암호는 동일하게 설정하고 alias는 `theme`을 사용합니다.
 
    ```powershell

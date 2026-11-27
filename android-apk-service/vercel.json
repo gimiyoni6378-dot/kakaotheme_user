@@ -2,7 +2,7 @@
   "buildCommand": "npm run build",
   "functions": {
     "api/session.mjs": {
-      "includeFiles": "{worker.py,project.py,template.zip}",
+      "includeFiles": "{worker.py,project.py,template.zip,dist/**}",
       "maxDuration": 60
     }
   }

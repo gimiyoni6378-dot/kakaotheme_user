@@ -7,4 +7,4 @@ __pycache__/
 *.keystore
 build/
 test-results/
-android-apk-service/api/session.mjs
+android-apk-service/dist/
