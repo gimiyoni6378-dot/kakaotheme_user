@@ -2,6 +2,12 @@
 
 GitHub Pages는 정적 파일만 제공하므로 APK 컴파일은 별도 서버에서 수행합니다. 기존 사이트의 `안드로이드 저장` 버튼 → 테마 프로젝트 생성 → Vercel Function에서 일회용 Sandbox 생성 → 업로드/빌드/서명 → `APK 다운로드` 클릭 순서입니다. iOS 내보내기는 기존 브라우저 처리를 유지합니다.
 
+## 비용 0원 운영 조건
+
+이 프로젝트는 **Hobby 무료 플랜 유지**를 조건으로 운영합니다. Pro/Enterprise 전환, 유료 추가 옵션, 유료 외부 빌드 서버는 사용하지 않습니다. 공식 Sandbox 정책상 Hobby의 무료 한도를 넘으면 추가 과금 대신 새 Sandbox 생성이 중단됩니다. 무료 한도 소진 시에도 계속 생성되도록 유료 플랜으로 자동 전환하는 동작은 코드에 없습니다. [공식 무료 한도·초과 처리](https://vercel.com/docs/sandbox/pricing#hobby)
+
+현재 설정: `agent-office` 팀 / `kakaotheme-apk` 프로젝트 / `https://project-1t3cy.vercel.app`. 프로젝트 최초 생성 시 부여된 기본 도메인을 사용합니다. `/api/session`의 POST에는 IP별 60초당 1회 방화벽 제한을 적용했습니다.
+
 ## 처음 배포할 때
 
 1. Vercel에 이 GitHub 저장소를 연결하고 **Root Directory를 `android-apk-service`**, Framework Preset을 **Other**로 지정합니다. 대시보드의 Build Command와 Output Directory override는 비워 둡니다. Node.js 24를 사용합니다. `npm ci`로 의존성을 설치합니다. `vercel.json`의 빌드 명령이 `src/session.mjs`와 SDK 의존성을 `dist/session.mjs`로 번들링하고 `api/session.mjs`가 이를 내보냅니다. SDK 내부의 CommonJS/ESM 혼용이 Vercel 함수 로더에서 충돌하는 것을 방지합니다.
