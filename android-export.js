@@ -26,6 +26,19 @@ function androidGlyph(bytes, glyph, color) {
   });
 }
 
+function androidTabAsset(bytes, type, selected, v) {
+  return androidCanvas(bytes, (ctx, c) => {
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = selected ? v.ink : v.accent;
+    ctx.font = `${Math.round(c.height * (type === 'More' ? .34 : .52))}px sans-serif`;
+    ctx.fillText(TAB_GLYPHS[type], c.width / 2, c.height * .31, c.width * .90);
+    ctx.fillStyle = v.ink;
+    ctx.font = `500 ${Math.round(c.height * .25)}px -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif`;
+    ctx.fillText(TAB_LABELS[type], c.width / 2, c.height * .81, c.width * .90);
+  });
+}
+
 function androidDot(bytes, color, checked) {
   return androidCanvas(bytes, (ctx, c) => {
     ctx.beginPath();
