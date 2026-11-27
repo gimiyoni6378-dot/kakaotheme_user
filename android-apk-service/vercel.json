@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/session.js": {
-      "includeFiles": "worker.py",
+      "includeFiles": "{worker.py,project.py,template.zip}",
       "maxDuration": 60
     }
   }

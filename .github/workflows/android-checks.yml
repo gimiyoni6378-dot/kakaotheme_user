@@ -1,0 +1,35 @@
+name: Android APK checks
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: android-apk-service/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Check exporters and server tests
+        run: |
+          node --check app.js
+          node --check android-export.js
+          npm ci --prefix android-apk-service
+          npm test --prefix android-apk-service
+          python3 -m unittest discover -s android-apk-service/tests -v
+      - name: Build the trusted release template
+        run: |
+          sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+          python3 -c "import zipfile; zipfile.ZipFile('android-apk-service/template.zip').extractall('android-check')"
+          chmod +x android-check/gradlew
+          cd android-check
+          ./gradlew --no-daemon --max-workers=2 assembleRelease

@@ -2,7 +2,13 @@
   "name": "kakaotheme-apk-service",
   "private": true,
   "type": "module",
+  "scripts": {
+    "test": "node --test tests/session.test.js"
+  },
   "dependencies": {
     "@vercel/sandbox": "^5.0.0"
+  },
+  "overrides": {
+    "zod": "^4.6.6"
   }
 }
