@@ -1,0 +1,77 @@
+name: Build Android theme APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag containing android-project.zip"
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: android-apk-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build debug APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Validate release tag and download project
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$ ]]; then
+            echo "::error::Release tag contains unsupported characters."
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/theme-project"
+          curl --fail --location --silent --show-error --retry 2 --max-filesize 52428800 \
+            "https://github.com/$REPOSITORY/releases/download/$RELEASE_TAG/android-project.zip" \
+            --output "$RUNNER_TEMP/android-project.zip"
+          python3 - "$RUNNER_TEMP/android-project.zip" "$RUNNER_TEMP/theme-project" <<'PY'
+          import pathlib, stat, sys, zipfile
+          archive_path, destination = map(pathlib.Path, sys.argv[1:])
+          with zipfile.ZipFile(archive_path) as archive:
+              entries = archive.infolist()
+              if len(entries) > 1200 or sum(e.file_size for e in entries) > 100 * 1024 * 1024:
+                  raise SystemExit("Project archive exceeds safety limits.")
+              for entry in entries:
+                  name = entry.filename
+                  path = pathlib.PurePosixPath(name)
+                  mode = entry.external_attr >> 16
+                  if path.is_absolute() or ".." in path.parts or "\\" in name:
+                      raise SystemExit("Project archive contains an unsafe path.")
+                  if stat.S_ISLNK(mode):
+                      raise SystemExit("Project archive may not contain symlinks.")
+              required = {"gradlew", "build.gradle.kts", "src/main/AndroidManifest.xml"}
+              names = {e.filename.rstrip("/") for e in entries}
+              missing = required - names
+              if missing:
+                  raise SystemExit("Project archive is missing required files: " + ", ".join(sorted(missing)))
+              archive.extractall(destination)
+          PY
+          chmod +x "$RUNNER_TEMP/theme-project/gradlew"
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Build APK
+        working-directory: ${{ runner.temp }}/theme-project
+        run: ./gradlew --no-daemon --stacktrace assembleDebug
+
+      - name: Upload APK for download
+        uses: actions/upload-artifact@v4
+        with:
+          name: kakaotalk-theme-apk
+          path: ${{ runner.temp }}/theme-project/**/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 1
