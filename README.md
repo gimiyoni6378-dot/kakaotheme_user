@@ -1,6 +1,8 @@
 # 톡테마 컬러 스튜디오
 
-GitHub Pages용 정적 배포본입니다. 빌드 도구나 서버 없이 페이지를 열어 색상을 설정하고 iOS용 .ktheme 파일을 내보냅니다.
+GitHub Pages용 정적 배포본입니다. 페이지에서 색상을 설정하고 iOS용 .ktheme 파일을 내보냅니다. Android APK는 별도 빌드 서버에 연결해 생성합니다.
+
+Android APK 서버 배포와 서명키·요청 제한 설정은 [Android 서비스 안내](android-apk-service/README.md)를 참고하세요. `android-config.js`에 서버 주소를 설정하기 전에는 Android 버튼이 서버 준비 안내를 표시합니다.
 
 ## 배포
 

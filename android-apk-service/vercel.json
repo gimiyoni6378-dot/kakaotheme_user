@@ -1,7 +1,9 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
   "functions": {
-    "api/session.js": {
-      "includeFiles": "worker.py",
+    "api/session.mjs": {
+      "includeFiles": "{worker.py,project.py,template.zip,dist/**}",
       "maxDuration": 60
     }
   }

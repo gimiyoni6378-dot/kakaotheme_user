@@ -1,0 +1,10 @@
+node_modules/
+__pycache__/
+*.pyc
+.vercel/
+.env*
+*.jks
+*.keystore
+build/
+test-results/
+android-apk-service/dist/
