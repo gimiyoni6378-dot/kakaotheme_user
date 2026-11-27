@@ -27,6 +27,8 @@ jobs:
           node --check android-export.js
           npm ci --prefix android-apk-service
           npm test --prefix android-apk-service
+          npm run build --prefix android-apk-service
+          npm run test:bundle --prefix android-apk-service
           python3 -m unittest discover -s android-apk-service/tests -v
       - name: Build, sign and verify through the real Linux worker
         run: |
