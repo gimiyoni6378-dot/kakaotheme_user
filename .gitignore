@@ -8,3 +8,5 @@ __pycache__/
 build/
 test-results/
 android-apk-service/dist/
+
+.test-output/

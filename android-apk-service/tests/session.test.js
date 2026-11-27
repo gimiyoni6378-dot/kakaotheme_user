@@ -37,7 +37,7 @@ test('origin, preflight, method, missing configuration and sandbox lifecycle', a
       assert.equal(options.timeout, 25 * 60_000);
       assert.equal(options.image, 'vercel/sandbox/universal');
       return {
-        writeFiles: async files => { assert.equal(files.length, 5); },
+        writeFiles: async files => { assert.equal(files.length, 6); },
         runCommand: async cmd => { assert.ok(cmd.env.SESSION_TOKEN); },
         domain: () => 'https://test.example',
         stop: async () => { stopped = true; }
@@ -49,6 +49,7 @@ test('origin, preflight, method, missing configuration and sandbox lifecycle', a
     assert.equal(res.statusCode, 200);
     assert.ok(res.payload.token.length > 30);
     assert.equal(res.payload.bubbleRendererVersion, 2);
+    assert.equal(res.payload.designSpecVersion, 1);
     assert.ok(res.payload.expiresAt > Date.now());
     assert.equal(stopped, false, 'keep the download server alive');
     res = response();

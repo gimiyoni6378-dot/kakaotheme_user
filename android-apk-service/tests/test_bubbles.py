@@ -7,7 +7,7 @@ import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from bubbles import DESIGN_FILE, ANDROID_NS, parse_design, STYLES
+from bubbles import DESIGN_FILE, ANDROID_NS, SPEC, parse_design, STYLES
 from project import TEMPLATE, prepare_project
 
 A = '{' + ANDROID_NS + '}'
@@ -61,6 +61,37 @@ class BubbleResourcesTests(unittest.TestCase):
         for data in cases:
             with self.subTest(data=data[:100]), self.assertRaises((ValueError, TypeError)):
                 parse_design(data)
+
+    def test_common_design_rejects_patterns_and_invalid_revision(self):
+        design = dict(version=2, specVersion=SPEC['version'], buildVersion=1795750000, style='rounded',
+                      colors={item['key']: '#123456' for item in SPEC['colors']})
+        self.assertEqual(parse_design(json.dumps(design).encode())['send'], '#123456')
+        for field, value in [('style', 'dashed'), ('style', 'wave'), ('style', []),
+                             ('buildVersion', True), ('buildVersion', 2100000001), ('specVersion', 999)]:
+            with self.subTest(field=field, value=value), self.assertRaises(ValueError):
+                parse_design(json.dumps({**design, field: value}).encode())
+
+    def test_common_snapshot_controls_colors_version_and_preserves_official_ninepatches(self):
+        from bubbles import apply_design
+        from project import xml_values
+        colors = dict(bg='#E8F4F8', main='#FAF2DE', accent='#B13A60', send='#C6E6BC', receive='#FFE1C6', ink='#24364A')
+        for style in SPEC['bubble']['styles']:
+            with self.subTest(style=style), zipfile.ZipFile(TEMPLATE) as source:
+                files = {n: source.read(n) for n in source.namelist()}
+                design = parse_design(json.dumps(dict(version=2, specVersion=SPEC['version'],
+                    buildVersion=1795750000, style=style, colors=colors)).encode())
+                apply_design(files, design)
+                actual = xml_values(files['src/main/theme/values/colors.xml'], 'color')
+                for key, binding in SPEC['android']['colors'].items():
+                    self.assertEqual(actual[key], colors[binding.removeprefix('$')])
+                self.assertIn(b'versionCode = 1795750000', files['build.gradle.kts'])
+                self.assertIn(b'versionName = "1.0.1795750000"', files['build.gradle.kts'])
+                for role in ('me', 'you'):
+                    for sequence in ('01', '02'):
+                        image=f'src/main/theme/drawable-xxhdpi/theme_chatroom_bubble_{role}_{sequence}_image.9.png'
+                        self.assertIn(image, files)
+                        self.assertEqual(files[image], source.read(image))
+                        self.assertNotIn(f'src/main/theme/drawable/theme_chatroom_bubble_{role}_{sequence}_image.xml', files)
 
 
 if __name__ == '__main__':

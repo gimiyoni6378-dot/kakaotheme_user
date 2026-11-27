@@ -1,0 +1,241 @@
+{
+  "version": 1,
+  "defaults": {
+    "name": "컬러 초안",
+    "bg": "#F2EFF8",
+    "main": "#FBFAFE",
+    "accent": "#A899C8",
+    "send": "#DDD3EF",
+    "receive": "#FFFFFF",
+    "ink": "#3F3A4A",
+    "bubbleStyle": "rounded"
+  },
+  "colors": [
+    {
+      "key": "bg",
+      "label": "대화 배경"
+    },
+    {
+      "key": "main",
+      "label": "친구 목록·하단 배경"
+    },
+    {
+      "key": "accent",
+      "label": "포인트 색"
+    },
+    {
+      "key": "send",
+      "label": "내 말풍선"
+    },
+    {
+      "key": "receive",
+      "label": "상대 말풍선"
+    },
+    {
+      "key": "ink",
+      "label": "글자 색"
+    }
+  ],
+  "bubble": {
+    "width": 40,
+    "height": 35,
+    "strokeWidth": 1,
+    "stretch": {
+      "x": 20,
+      "y": 17
+    },
+    "styles": {
+      "square": {
+        "label": "각진 모서리",
+        "description": "깔끔한 직선 모양",
+        "radius": 1
+      },
+      "rounded": {
+        "label": "둥근 모서리",
+        "description": "부드러운 둥근 모양",
+        "radius": 12
+      }
+    },
+    "padding": {
+      "send": {
+        "top": 14,
+        "right": 17,
+        "bottom": 10,
+        "left": 11
+      },
+      "receive": {
+        "top": 14,
+        "right": 11,
+        "bottom": 10,
+        "left": 17
+      }
+    }
+  },
+  "ios": {
+    "styles": {
+      "TabBarStyle-Main": {
+        "background-color": "$main",
+        "-background-sidebar-color": "$main"
+      },
+      "HeaderStyle-Main": {
+        "-ios-text-color": "$ink",
+        "-ios-tab-text-color": "$accent",
+        "-ios-tab-highlighted-text-color": "$ink"
+      },
+      "MainViewStyle-Primary": {
+        "background-color": "$main",
+        "-ios-text-color": "$ink",
+        "-ios-highlighted-text-color": "$accent",
+        "-ios-description-text-color": "$ink",
+        "-ios-description-highlighted-text-color": "$accent",
+        "-ios-paragraph-text-color": "$ink",
+        "-ios-paragraph-highlighted-text-color": "$accent",
+        "-ios-selected-background-color": "$accent"
+      },
+      "MainViewStyle-Secondary": {
+        "background-color": "$main"
+      },
+      "SectionTitleStyle-Main": {
+        "-ios-text-color": "$accent"
+      },
+      "FeatureStyle-Primary": {
+        "-ios-text-color": "$ink"
+      },
+      "ButtonStyle-Main": {
+        "background-color": "$bg",
+        "-ios-highlighted-background-color": "$accent",
+        "-ios-selected-background-color": "$accent"
+      },
+      "BackgroundStyle-ChatRoom": {
+        "background-color": "$bg"
+      },
+      "InputBarStyle-Chat": {
+        "background-color": "$main",
+        "-ios-send-normal-background-color": "$accent",
+        "-ios-send-normal-foreground-color": "$ink",
+        "-ios-send-highlighted-background-color": "$accent",
+        "-ios-send-highlighted-foreground-color": "$main",
+        "-ios-button-normal-foreground-color": "$accent",
+        "-ios-button-highlighted-foreground-color": "$ink",
+        "-ios-button-text-color": "$ink"
+      },
+      "MessageCellStyle-Send": {
+        "-ios-text-color": "$ink",
+        "-ios-selected-text-color": "$ink",
+        "-ios-unread-text-color": "$accent"
+      },
+      "MessageCellStyle-Receive": {
+        "-ios-text-color": "$ink",
+        "-ios-selected-text-color": "$ink",
+        "-ios-unread-text-color": "$accent"
+      },
+      "BackgroundStyle-Passcode": {
+        "background-color": "$bg"
+      },
+      "LabelStyle-PasscodeTitle": {
+        "-ios-text-color": "$ink"
+      },
+      "PasscodeStyle": {
+        "-ios-keypad-background-color": "$main",
+        "-ios-keypad-text-normal-color": "$ink"
+      },
+      "BackgroundStyle-MessageNotificationBar": {
+        "background-color": "$send"
+      },
+      "LabelStyle-MessageNotificationBarName": {
+        "-ios-text-color": "$ink"
+      },
+      "LabelStyle-MessageNotificationBarMessage": {
+        "-ios-text-color": "$ink"
+      },
+      "BackgroundStyle-DirectShareBar": {
+        "background-color": "$main"
+      },
+      "LabelStyle-DirectShareBarName": {
+        "-ios-text-color": "$accent"
+      },
+      "LabelStyle-DirectShareBarMessage": {
+        "-ios-text-color": "$ink"
+      },
+      "BottomBannerStyle": {
+        "background-color": "$accent"
+      },
+      "BottomBannerStyle-Light": {
+        "background-color": "$accent"
+      }
+    }
+  },
+  "android": {
+    "colors": {
+      "theme_header_color": "$ink",
+      "theme_section_title_color": "$accent",
+      "theme_title_color": "$ink",
+      "theme_title_pressed_color": "$accent",
+      "theme_paragraph_color": "$ink",
+      "theme_paragraph_pressed_color": "$accent",
+      "theme_description_color": "$ink",
+      "theme_description_pressed_color": "$accent",
+      "theme_feature_primary_color": "$accent",
+      "theme_feature_primary_pressed_color": "$accent",
+      "theme_feature_browse_tab_color": "$accent",
+      "theme_feature_browse_tab_focused_color": "$ink",
+      "theme_background_color": "$main",
+      "theme_chatroom_background_color": "$bg",
+      "theme_passcode_background_color": "$bg",
+      "theme_header_cell_color": "$main",
+      "theme_body_cell_color": "$main",
+      "theme_body_cell_pressed_color": "$accent",
+      "theme_body_cell_border_color": "$accent",
+      "theme_body_secondary_cell_color": "$main",
+      "theme_maintab_cell_color": "$main",
+      "theme_tab_lightbannerbadge_background_color": "$accent",
+      "theme_tab_bannerbadge_background_color": "$accent",
+      "theme_direct_share_color": "$ink",
+      "theme_direct_share_button_color": "$accent",
+      "theme_direct_share_background_color": "$main",
+      "theme_notification_color": "$ink",
+      "theme_notification_background_color": "$main",
+      "theme_notification_background_pressed_color": "$accent",
+      "theme_passcode_color": "$ink",
+      "theme_passcode_keypad_color": "$ink",
+      "theme_passcode_keypad_pressed_color": "$accent",
+      "theme_passcode_keypad_background_color": "$main",
+      "theme_passcode_keypad_pressed_background_color": "$accent",
+      "theme_passcode_pattern_line_color": "$accent",
+      "theme_chatroom_bubble_me_color": "$ink",
+      "theme_chatroom_bubble_you_color": "$ink",
+      "theme_chatroom_unread_count_color": "$accent",
+      "theme_chatroom_input_bar_color": "$ink",
+      "theme_chatroom_input_bar_background_color": "$main",
+      "theme_chatroom_input_bar_menu_icon_color": "$accent",
+      "theme_chatroom_input_bar_menu_button_color": "$accent",
+      "theme_chatroom_input_bar_send_icon_color": "$ink",
+      "theme_chatroom_input_bar_send_button_color": "$accent",
+      "theme_button_background_color": "$accent",
+      "theme_button_pressed_background_color": "$accent",
+      "theme_button_selected_background_color": "$accent",
+      "theme_navigationbar_background_color": "$main",
+      "theme_navigationrail_background_color": "$main"
+    },
+    "appColors": {
+      "statusBarColor": "$main"
+    }
+  },
+  "background": {
+    "fit": "cover",
+    "position": "center",
+    "width": 720,
+    "height": 1440
+  },
+  "commonFeatures": [
+    "color.bg",
+    "color.main",
+    "color.accent",
+    "color.send",
+    "color.receive",
+    "color.ink",
+    "bubble.square",
+    "bubble.rounded",
+    "chat.image"
+  ]
+}

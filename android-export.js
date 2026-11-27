@@ -1,77 +1,4 @@
-// Android-only helpers. The iOS exporter and page layout stay independent.
-function androidStringValue(value) {
-  const text = String(value).replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, 60)
-    .replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  return '&quot;' + text + '&quot;';
-}
-
-async function androidCanvas(bytes, draw) {
-  const image = await createImageBitmap(new Blob([bytes]));
-  const canvas = document.createElement('canvas');
-  canvas.width = image.width;
-  canvas.height = image.height;
-  await draw(canvas.getContext('2d'), canvas, image);
-  image.close();
-  return androidPngBytes(await canvasBlob(canvas));
-}
-
-function androidGlyph(bytes, glyph, color) {
-  return androidCanvas(bytes, (ctx, c) => {
-    ctx.fillStyle = color;
-    ctx.font = `${Math.floor(Math.min(c.width, c.height) * .70)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(glyph, c.width / 2, c.height / 2, c.width * .90);
-  });
-}
-
-function androidTabAsset(bytes, type, selected, v) {
-  return androidCanvas(bytes, (ctx, c) => {
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = selected ? v.ink : v.accent;
-    ctx.font = `${Math.round(c.height * (type === 'More' ? .34 : .52))}px sans-serif`;
-    ctx.fillText(TAB_GLYPHS[type], c.width / 2, c.height * .31, c.width * .90);
-    ctx.fillStyle = v.ink;
-    ctx.font = `500 ${Math.round(c.height * .25)}px -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif`;
-    ctx.fillText(TAB_LABELS[type], c.width / 2, c.height * .81, c.width * .90);
-  });
-}
-
-function androidDot(bytes, color, checked) {
-  return androidCanvas(bytes, (ctx, c) => {
-    ctx.beginPath();
-    ctx.arc(c.width / 2, c.height / 2, Math.min(c.width, c.height) * .30, 0, Math.PI * 2);
-    ctx.strokeStyle = ctx.fillStyle = color;
-    ctx.lineWidth = Math.max(2, c.width * .06);
-    if (checked) ctx.fill(); else ctx.stroke();
-  });
-}
-
-function androidProfile(bytes, v) {
-  return androidCanvas(bytes, (ctx, c) => {
-    ctx.fillStyle = v.main;
-    ctx.fillRect(0, 0, c.width, c.height);
-    ctx.fillStyle = v.accent;
-    ctx.beginPath();
-    ctx.arc(c.width * .5, c.height * .35, c.width * .17, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(c.width * .5, c.height * .85, c.width * .34, c.height * .30, 0, 0, Math.PI * 2);
-    ctx.fill();
-  });
-}
-
-function androidNinePatchFill(bytes, color) {
-  return androidCanvas(bytes, (ctx, c, image) => {
-    // Keep the official 1-pixel stretch/content markers intact.
-    ctx.drawImage(image, 0, 0);
-    ctx.fillStyle = color;
-    ctx.fillRect(1, 1, c.width - 2, c.height - 2);
-  });
-}
-
+// Android APK session and download flow. Resource generation is in android-project.js.
 let androidReadyDownload = null;
 let androidReadyTimer = null;
 
@@ -133,10 +60,10 @@ async function exportAndroidApk() {
   button.setAttribute('aria-busy', 'true');
   try {
     androidButton('안드로이드 저장', '테마 이미지 생성 중');
-    const project = await makeAndroidProjectZip(theme);
+    const project = await ANDROID_THEME_EXPORTER.build(theme);
     androidButton('안드로이드 저장', '빌드 서버 연결 중');
     const session = await androidRequest(service + '/api/session', { method: 'POST' });
-    if (session.bubbleRendererVersion !== 2) throw Error('말풍선 빌드 서버가 업데이트 중이에요. 잠시 뒤 다시 저장해주세요.');
+    if (session.bubbleRendererVersion !== 2 || session.designSpecVersion !== THEME_DESIGN.spec.version) throw Error('말풍선 빌드 서버가 업데이트 중이에요. 잠시 뒤 다시 저장해주세요.');
     const base = new URL(session.builderUrl);
     if (base.protocol !== 'https:' && base.hostname !== '127.0.0.1') throw Error('올바르지 않은 빌드 서버 주소입니다.');
     const expires = Number(session.expiresAt);

@@ -3,7 +3,7 @@
   "outputDirectory": "public",
   "functions": {
     "api/session.mjs": {
-      "includeFiles": "{worker.py,project.py,bubbles.py,template.zip,dist/**}",
+      "includeFiles": "{worker.py,project.py,bubbles.py,theme-spec.json,template.zip,dist/**}",
       "maxDuration": 60
     }
   }

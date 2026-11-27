@@ -7,11 +7,14 @@ import math
 import re
 import struct
 import zlib
+from pathlib import Path
+import xml.etree.ElementTree as ET
 
 DESIGN_FILE = 'talktheme-bubbles.json'
 STYLES = ('square', 'rounded', 'wave', 'dashed')
 BASE = 'src/main/theme/'
 ANDROID_NS = 'http://schemas.android.com/apk/res/android'
+SPEC = json.loads(Path(__file__).with_name('theme-spec.json').read_text(encoding='utf-8'))
 
 
 def parse_design(data):
@@ -25,6 +28,19 @@ def parse_design(data):
             result[key] = value
         return result
     value = json.loads(data, object_pairs_hook=unique)
+    if isinstance(value, dict) and type(value.get('version')) is int and value['version'] == 2:
+        if set(value) != {'version', 'specVersion', 'buildVersion', 'style', 'colors'}:
+            raise ValueError('잘못된 공통 테마 설정입니다.')
+        keys = {item['key'] for item in SPEC['colors']}
+        colors = value['colors']
+        if (type(value['specVersion']) is not int or value['specVersion'] != SPEC['version']
+                or not isinstance(value['style'], str) or value['style'] not in SPEC['bubble']['styles']
+                or type(value['buildVersion']) is not int or not 101 <= value['buildVersion'] <= 2100000000
+                or not isinstance(colors, dict) or set(colors) != keys):
+            raise ValueError('지원하지 않는 공통 테마 설정입니다. 페이지를 새로고침해주세요.')
+        if any(not isinstance(c, str) or not re.fullmatch(r'#[0-9a-fA-F]{6}', c) for c in colors.values()):
+            raise ValueError('잘못된 공통 테마 색상입니다.')
+        return {**value, 'send': colors['send'], 'receive': colors['receive'], 'border': colors['accent']}
     if not isinstance(value, dict) or set(value) != {'version', 'style', 'send', 'receive', 'border'}:
         raise ValueError('잘못된 말풍선 설정입니다.')
     if type(value['version']) is not int or value['version'] != 1 or value['style'] not in STYLES:
@@ -89,14 +105,17 @@ def wave_textures(prefix, fill, border):
 
 
 def drawable(style, fill, border, prefix, outgoing):
-    left, right = (11, 17) if outgoing else (17, 11)
-    padding = f'<padding android:left="{left}dp" android:top="14dp" android:right="{right}dp" android:bottom="10dp"/>'
+    pad = SPEC['bubble']['padding']['send' if outgoing else 'receive']
+    left, right = pad['left'], pad['right']
+    padding = '<padding ' + ' '.join(f'android:{side}="{value}dp"' for side, value in pad.items()) + '/>'
     if style != 'wave':
-        radius = {'square': 1, 'rounded': 12, 'dashed': 9}[style]
+        radius = SPEC['bubble']['styles'].get(style, {'radius': 9})['radius']
+        stroke = SPEC['bubble']['strokeWidth']
         dash = ' android:dashWidth="3dp" android:dashGap="2dp"' if style == 'dashed' else ''
         return (f'<shape xmlns:android="{ANDROID_NS}" android:shape="rectangle">'
+                f'<size android:width="{SPEC["bubble"]["width"]}dp" android:height="{SPEC["bubble"]["height"]}dp"/>'
                 f'<solid android:color="{fill}"/><corners android:radius="{radius}dp"/>'
-                f'<stroke android:width="1dp" android:color="{border}"{dash}/>{padding}</shape>').encode()
+                f'<stroke android:width="{stroke}dp" android:color="{border}"{dash}/>{padding}</shape>').encode()
     # A bitmap stretches its dashes/waves. Tile each edge at its native period instead.
     padding = f'<padding android:left="{left - 6}dp" android:top="8dp" android:right="{right - 6}dp" android:bottom="4dp"/>'
     parts = [f'<layer-list xmlns:android="{ANDROID_NS}" android:paddingMode="stack">',
@@ -116,6 +135,28 @@ def drawable(style, fill, border, prefix, outgoing):
 
 def apply_design(files, design):
     """Replace only the four known bubble resources, preserving their resource IDs."""
+    if design['version'] == 2:
+        colors = design['colors']
+        for path, bindings in [(BASE + 'values/colors.xml', SPEC['android']['colors']),
+                               ('src/main/res/values/colors.xml', SPEC['android']['appColors'])]:
+            root = ET.fromstring(files[path])
+            for item in root:
+                value = bindings.get(item.get('name'))
+                if value:
+                    item.text = colors[value.removeprefix('$')]
+            files[path] = ET.tostring(root, encoding='utf-8', xml_declaration=True)
+        # Same-name downloads receive a new package version, instead of stale resources.
+        gradle = files['build.gradle.kts'].decode('utf-8')
+        revision = design['buildVersion']
+        gradle, codes = re.subn(r'versionCode\s*=\s*\d+', f'versionCode = {revision}', gradle)
+        gradle, names = re.subn(r'versionName\s*=\s*"[^"]+"',
+                               f'versionName = "{SPEC["version"]}.0.{revision}"', gradle)
+        if codes != 1 or names != 1:
+            raise ValueError('공식 버전 설정 구성이 다릅니다.')
+        files['build.gradle.kts'] = gradle.encode('utf-8')
+        # Common exports keep the official .9.png resources. The browser puts
+        # the very same raster body into the iOS PNG and the Android NinePatch.
+        return
     names = [n for n in files if re.fullmatch(BASE + r'drawable-xxhdpi/theme_chatroom_bubble_(me|you)_0[12]_image\.9\.png', n)]
     if len(names) != 4:
         raise ValueError('공식 말풍선 리소스 구성이 다릅니다.')

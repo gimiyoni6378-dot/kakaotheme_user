@@ -5,7 +5,7 @@ import struct
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
-from bubbles import DESIGN_FILE, parse_design, apply_design
+from bubbles import DESIGN_FILE, SPEC, parse_design, apply_design
 
 TEMPLATE = Path(__file__).with_name('template.zip')
 MAX_UPLOAD = 10 * 1024 * 1024
@@ -39,7 +39,11 @@ def validate_resource(name, data, original):
     if name.endswith('.png') and name.startswith(('src/main/theme/', 'src/main/res/mipmap-')):
         if len(data) < 33 or data[:8] != b'\x89PNG\r\n\x1a\n' or data[12:16] != b'IHDR':
             raise ValueError('PNG 이미지가 올바르지 않습니다.')
-        if data[16:24] != original[16:24]:
+        common_photo = (name.endswith('/theme_chatroom_background_image.png')
+                        and data[16:24] == struct.pack('>II', SPEC['background']['width'], SPEC['background']['height']))
+        common_bubble = (re.fullmatch(r'src/main/theme/drawable-xxhdpi/theme_chatroom_bubble_(me|you)_0[12]_image\.9\.png', name)
+                         and data[16:24] == struct.pack('>II', SPEC['bubble']['width'] * 3 + 2, SPEC['bubble']['height'] * 3 + 2))
+        if data[16:24] != original[16:24] and not common_photo and not common_bubble:
             raise ValueError('샘플과 이미지 크기가 다릅니다.')
         width, height = struct.unpack('>II', data[16:24])
         if width * height > 16_000_000:
@@ -99,6 +103,12 @@ def prepare_project(archive_path, workdir):
                 validate_resource(name, data, original)
             files[name] = data
         if DESIGN_FILE in names:
+            if design['version'] == 2:
+                expected_size = struct.pack('>II', SPEC['bubble']['width'] * 3 + 2, SPEC['bubble']['height'] * 3 + 2)
+                for name, data in files.items():
+                    if re.fullmatch(r'src/main/theme/drawable-xxhdpi/theme_chatroom_bubble_(me|you)_0[12]_image\.9\.png', name):
+                        if data[16:24] != expected_size:
+                            raise ValueError('공통 템플릿의 Android 말풍선 이미지가 아닙니다. 페이지를 새로고침해주세요.')
             apply_design(files, design)
         workdir.mkdir(parents=True, exist_ok=True)
         for name, data in files.items():

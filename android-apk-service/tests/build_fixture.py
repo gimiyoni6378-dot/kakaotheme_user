@@ -1,10 +1,9 @@
 """Exercise the real Linux worker: toolchain, release build, sign and verify."""
 import os
-import json
+import shutil
 import secrets
 import sys
 import tempfile
-import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -24,15 +23,10 @@ try:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         archive = root / 'project.zip'
-        with zipfile.ZipFile(TEMPLATE) as source, zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as output:
-            for name in source.namelist():
-                data = source.read(name)
-                if name == 'build.gradle.kts':
-                    data = data.replace(b'com.kakao.talk.theme.template', b'com.talktheme.studio.cifixture')
-                output.writestr(name, data)
-            output.writestr('talktheme-bubbles.json', json.dumps({
-                'version': 1, 'style': 'wave', 'send': '#D8E6D3',
-                'receive': '#FFFFFF', 'border': '#50775B'}))
+        fixture = Path(__file__).resolve().parents[2] / '.test-output/common-rounded-plain.zip'
+        if not fixture.exists():
+            raise SystemExit('Run npm test at the repository root to generate actual platform adapter fixtures')
+        shutil.copyfile(fixture, archive)
         worker.JOBS['ci'] = {'stage': 'start', 'done': False, 'error': None}
         worker.build('ci', archive, root / 'project')
         job = worker.JOBS['ci']
