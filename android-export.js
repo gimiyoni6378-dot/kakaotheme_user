@@ -119,9 +119,9 @@ async function exportAndroidApk() {
   button.disabled = true;
   button.setAttribute('aria-busy', 'true');
   try {
-    androidButton('APK 준비 중', '테마 이미지 생성');
+    androidButton('안드로이드 저장', '테마 이미지 생성 중');
     const project = await makeAndroidProjectZip(theme);
-    androidButton('APK 준비 중', '빌드 서버 연결');
+    androidButton('안드로이드 저장', '빌드 서버 연결 중');
     const session = await androidRequest(service + '/api/session', { method: 'POST' });
     const base = new URL(session.builderUrl);
     if (base.protocol !== 'https:' && base.hostname !== '127.0.0.1') throw Error('올바르지 않은 빌드 서버 주소입니다.');
@@ -139,8 +139,8 @@ async function exportAndroidApk() {
         const url = new URL('/download/' + encodeURIComponent(job.jobId), base);
         url.searchParams.set('token', session.token);
         androidReadyDownload = { url: url.href, name: project.name, expires, design };
-        androidButton('APK 다운로드', project.name + ' · 완료');
-        toast('APK가 완성됐어요. APK 다운로드 버튼을 눌러 저장해주세요.');
+        androidButton('안드로이드 저장', '저장 준비 완료');
+        toast('테마가 완성됐어요. 안드로이드 저장을 한 번 더 눌러 APK 파일을 저장해주세요.');
         clearTimeout(androidReadyTimer);
         androidReadyTimer = setTimeout(() => {
           androidReadyDownload = null;
@@ -148,7 +148,7 @@ async function exportAndroidApk() {
         }, Math.max(0, expires - Date.now()));
         return;
       }
-      androidButton('APK 생성 중', status.stage || '빌드 진행 중');
+      androidButton('안드로이드 저장', status.stage || '빌드 진행 중');
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
     throw Error('APK 생성 시간이 초과됐어요. 다시 시도해주세요.');
