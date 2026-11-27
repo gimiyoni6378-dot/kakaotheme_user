@@ -16,7 +16,9 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: android-apk-service/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            android-apk-service/package-lock.json
       - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: temurin
@@ -24,6 +26,12 @@ jobs:
       - name: Check exporters and server tests
         run: |
           node --check app.js
+          node --check ios-export.js
+          node --check android-project.js
+          node --check theme-utils.js
+          npm ci
+          npm run format:check
+          npm test
           node --check android-export.js
           npm ci --prefix android-apk-service
           npm test --prefix android-apk-service

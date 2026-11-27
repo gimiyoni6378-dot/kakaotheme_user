@@ -1,57 +1,538 @@
-const DEFAULTS={name:'컬러 초안',bg:'#F2EFF8',main:'#FBFAFE',accent:'#A899C8',send:'#DDD3EF',receive:'#FFFFFF',ink:'#3F3A4A',bubbleStyle:'rounded'};
-const WAVE_PATH='M10 5 C12.76 2 17.24 2 20 5 C22.76 8 27.24 8 30 5 C32.76 2 37.24 2 40 5 C42.76 8 47.24 8 50 5 C52.76 2 57.24 2 60 5 C62.76 8 67.24 8 70 5 C72.76 2 77.24 2 80 5 C82.76 8 87.24 8 90 5 Q95 5 95 10 C98 12.76 98 17.24 95 20 C92 22.76 92 27.24 95 30 C98 32.76 98 37.24 95 40 C92 42.76 92 47.24 95 50 Q95 55 90 55 C87.24 58 82.76 58 80 55 C77.24 52 72.76 52 70 55 C67.24 58 62.76 58 60 55 C57.24 52 52.76 52 50 55 C47.24 58 42.76 58 40 55 C37.24 52 32.76 52 30 55 C27.24 58 22.76 58 20 55 C17.24 52 12.76 52 10 55 Q5 55 5 50 C2 47.24 2 42.76 5 40 C8 37.24 8 32.76 5 30 C2 27.24 2 22.76 5 20 C8 17.24 8 12.76 5 10 Q5 5 10 5 Z';
-const palettes=[['라벤더','#F2EFF8','#FBFAFE','#A899C8','#DDD3EF','#FFFFFF','#3F3A4A'],['소프트 모닝','#F4F0E8','#FCFAF6','#B7C8B3','#D8E6D3','#FFFFFF','#31352F'],['블루 아워','#EAF1F6','#F8FBFD','#8EAFC8','#C8DCEB','#FFFFFF','#2F3E4B'],['피치 티','#FFF0E7','#FFFAF6','#D89678','#F8D2BE','#FFFFFF','#523B35'],['말차 크림','#EEF1E5','#FAFBF5','#8B9D6A','#D9E4C0','#FFFFFF','#35402D'],['체리 소다','#FCEEF0','#FFFAFB','#CF7C8C','#F6CED4','#FFFFFF','#4A343A']];
-const defs=[['대화 배경','bg'],['친구 목록·하단 배경','main'],['포인트 색','accent'],['내 말풍선','send'],['상대 말풍선','receive'],['글자 색','ink']];const swatches=['#FFFFFF','#FFFDF8','#F8F5EE','#F4F0E8','#E9E2D7','#D5CCBD','#B7AA98','#807462','#FCEEF0','#F6CED4','#E7A2AC','#CF7C8C','#FFF0E7','#F8D2BE','#E7A989','#D89678','#F2EFF8','#DDD3EF','#A899C8','#74658F','#EAF1F6','#C8DCEB','#8EAFC8','#5A7791','#EEF1E5','#D9E4C0','#A8BD83','#70814F','#E8F3E8','#CDE6D0','#8FBE9A','#50775B','#F7E8D5','#EBC99F','#BD9666','#775C3C','#F4E8EA','#D9BFC4','#A77D86','#694B55'];
-let stored={};try{stored=JSON.parse(localStorage.getItem('talktheme')||'{}')}catch{}let s={...DEFAULTS,...Object.fromEntries(Object.keys(DEFAULTS).filter(k=>k!=='name').map(k=>[k,stored[k]||DEFAULTS[k]])),name:stored.name||DEFAULTS.name,images:stored.images&&typeof stored.images==='object'?{chat:stored.images.chat||null}:{chat:null}};if(s.bubbleStyle==='cloud')s.bubbleStyle='wave';let activeKey=null,stagedColor=null,stagedPalette=null;const $=q=>document.querySelector(q),hex=v=>/^#[0-9a-f]{6}$/i.test(v)?v:'#000000';
-function persist(){localStorage.setItem('talktheme',JSON.stringify(s))}function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;setTimeout(()=>t.hidden=true,2800)}function current(){let v={...s};if(stagedPalette){[v.bg,v.main,v.accent,v.send,v.receive,v.ink]=stagedPalette.slice(1)}if(activeKey&&stagedColor)v[activeKey]=stagedColor;return v}
-function openPicker(key){activeKey=key;stagedColor=s[key];stagedPalette=null;drawPicker();preview()}function drawPicker(){const p=$('#color-picker-panel');if(!activeKey){p.hidden=true;return}p.innerHTML='<div class="picker-head"><b>'+defs.find(x=>x[1]===activeKey)[0]+' 색상</b><input type="color" id="staged-color" value="'+stagedColor+'"><code>'+stagedColor+'</code></div><div class="swatches">'+swatches.map(c=>'<button type="button" data-swatch="'+c+'" title="'+c+'" style="background:'+c+'"></button>').join('')+'</div><div class="picker-actions"><button type="button" data-cancel>취소</button><button type="button" class="apply" data-apply>적용</button></div>';p.hidden=false}
-function paintImageControls(){const image=s.images?.chat,preview=$('#chat-image-preview'),label=$('#chat-image-name');if(!preview||!label)return;preview.style.backgroundImage=image?.data?'url("'+image.data+'")':'none';preview.classList.toggle('has-image',Boolean(image?.data));label.textContent=image?.name||'이미지를 선택해주세요'}
-function render(){$('#name').value=s.name;$('#colors').innerHTML=defs.map(([label,key])=>'<div class="color-row"><span>'+label+'</span><button type="button" class="color-open" data-color="'+key+'"><i style="background:'+s[key]+'"></i><code>'+s[key]+'</code><span>색 선택</span></button></div>').join('');$('#bubble-templates').innerHTML=[['square','각진 모서리','깔끔한 직선 모양'],['rounded','둥근 모서리','부드럽고 익숙한 모양'],['wave','물결 테두리','잔잔하게 출렁이는 테두리'],['dashed','점선 테두리','가벼운 점선 테두리']].map(([id,label,desc])=>'<button type="button" class="bubble-template '+(s.bubbleStyle===id?'selected':'')+'" data-bubble-style="'+id+'" aria-pressed="'+(s.bubbleStyle===id)+'"><span class="bubble-sample '+id+'">'+(id==='wave'?'<svg class="sample-wave" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true"><path d="'+WAVE_PATH+'"/></svg>':'')+'<span>가나다</span></span><b>'+label+'</b><small>'+desc+'</small></button>').join('');$('#presets').innerHTML=palettes.map(p=>'<div class="preset-line"><div class="preset '+(stagedPalette?.[0]===p[0]?'selected':'')+'" data-preset-preview="'+p[0]+'"><small>'+p[0]+'</small>'+p.slice(1,6).map(c=>'<i style="background:'+c+'"></i>').join('')+'<button type="button" data-preset-apply="'+p[0]+'">적용</button></div></div>').join('');drawPicker();paintImageControls();preview()}
-function preview(){androidInvalidateDownload();const v=current(),chat=$('#chat-preview'),friends=$('#friends-preview');chat.innerHTML='<div class="chat-screen" data-bubble-style="'+v.bubbleStyle+'"><div class="chat-nav"><span>‹</span><b>오후의 작은 대화</b><span>⌕　☰</span></div><div class="day-pill">오늘 · 오후 2:41</div><div class="message-row"><div class="avatar profile-placeholder" aria-hidden="true"></div><div><small>민지</small><div class="bubble incoming"><svg class="bubble-wave" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true"><path d="'+WAVE_PATH+'"/></svg><span>오늘 날씨 너무 좋다 ☁️<br>산책 갈래?</span></div><time>오후 2:41</time></div></div><div class="message-row mine"><div><div class="bubble outgoing"><svg class="bubble-wave" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true"><path d="'+WAVE_PATH+'"/></svg><span>좋아! 좋아하는 카페도<br>들러가자 🌿</span></div><time>오후 2:42</time></div></div><div class="message-row"><div class="avatar profile-placeholder" aria-hidden="true"></div><div><small>민지</small><div class="bubble incoming"><svg class="bubble-wave" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true"><path d="'+WAVE_PATH+'"/></svg><span>완전 좋아 🤍<br>금방 준비하고 나갈게!</span></div></div></div><div class="chat-spacer"></div><div class="inputbar"><span>＋</span><div>메시지를 입력하세요</div><span>☺</span></div></div>';friends.innerHTML='<div class="friends-screen"><div class="friends-nav"><b>친구</b><span>⌕　＋　☰</span></div><div class="friend-search">친구 이름 검색</div><div class="friend-caption">내 프로필</div>'+[['나','오늘도 좋은 하루'],['민지','오늘도 좋은 하루'],['서연','산책 갈까요?'],['지우','오늘도 좋은 하루']].map((x,i)=>'<div class="friend-item"><div class="friend-avatar profile-placeholder" aria-hidden="true"></div><div><b>'+x[0]+'</b><small>'+x[1]+'</small></div></div>').join('')+'<nav class="fake-tab">'+[['●','친구'],['▤','채팅'],['◉','지금'],['◇','쇼핑'],['•••','더보기']].map((x,i)=>'<span style="color:'+(i===0?v.ink:v.accent)+'"><b>'+x[0]+'</b><small>'+x[1]+'</small></span>').join('')+'</nav></div>';for(const el of [chat.querySelector('.chat-screen'),friends.querySelector('.friends-screen'),$('#bubble-templates')]){el.style.setProperty('--bg',v.bg);el.style.setProperty('--main',v.main);el.style.setProperty('--accent',v.accent);el.style.setProperty('--send',v.send);el.style.setProperty('--receive',v.receive);el.style.setProperty('--ink',v.ink)}const chatScreen=chat.querySelector('.chat-screen'),friendsScreen=friends.querySelector('.friends-screen');if(v.images?.chat?.data)chatScreen.style.backgroundImage='url("'+v.images.chat.data+'")';document.querySelectorAll('.color-open').forEach(b=>{const k=b.dataset.color;b.querySelector('i').style.background=v[k];b.querySelector('code').textContent=v[k]});const note=document.querySelector('.bubble-note');if(note)note.textContent=['dashed','wave'].includes(v.bubbleStyle)?'iOS는 이미지 늘림 방식이라 긴 말풍선에서 점선·물결 간격이 늘어날 수 있어요. Android는 반복 테두리를 사용해요.':'선택한 모양은 미리보기와 iOS 및 Android 내보내기에 반영돼요.';refreshWavePreviews()}
-function safeName(v){return(v||'내 테마').replace(/[\\/:*?"<>|]/g,'_').trim().slice(0,30)||'내 테마'}function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),30000)}
+const DEFAULTS = {};
+const palettes = [
+  ["라벤더", "#F2EFF8", "#FBFAFE", "#A899C8", "#DDD3EF", "#FFFFFF", "#3F3A4A"],
+  [
+    "소프트 모닝",
+    "#F4F0E8",
+    "#FCFAF6",
+    "#B7C8B3",
+    "#D8E6D3",
+    "#FFFFFF",
+    "#31352F",
+  ],
+  [
+    "블루 아워",
+    "#EAF1F6",
+    "#F8FBFD",
+    "#8EAFC8",
+    "#C8DCEB",
+    "#FFFFFF",
+    "#2F3E4B",
+  ],
+  ["피치 티", "#FFF0E7", "#FFFAF6", "#D89678", "#F8D2BE", "#FFFFFF", "#523B35"],
+  [
+    "말차 크림",
+    "#EEF1E5",
+    "#FAFBF5",
+    "#8B9D6A",
+    "#D9E4C0",
+    "#FFFFFF",
+    "#35402D",
+  ],
+  [
+    "체리 소다",
+    "#FCEEF0",
+    "#FFFAFB",
+    "#CF7C8C",
+    "#F6CED4",
+    "#FFFFFF",
+    "#4A343A",
+  ],
+];
+let defs = [];
+const swatches = [
+  "#FFFFFF",
+  "#FFFDF8",
+  "#F8F5EE",
+  "#F4F0E8",
+  "#E9E2D7",
+  "#D5CCBD",
+  "#B7AA98",
+  "#807462",
+  "#FCEEF0",
+  "#F6CED4",
+  "#E7A2AC",
+  "#CF7C8C",
+  "#FFF0E7",
+  "#F8D2BE",
+  "#E7A989",
+  "#D89678",
+  "#F2EFF8",
+  "#DDD3EF",
+  "#A899C8",
+  "#74658F",
+  "#EAF1F6",
+  "#C8DCEB",
+  "#8EAFC8",
+  "#5A7791",
+  "#EEF1E5",
+  "#D9E4C0",
+  "#A8BD83",
+  "#70814F",
+  "#E8F3E8",
+  "#CDE6D0",
+  "#8FBE9A",
+  "#50775B",
+  "#F7E8D5",
+  "#EBC99F",
+  "#BD9666",
+  "#775C3C",
+  "#F4E8EA",
+  "#D9BFC4",
+  "#A77D86",
+  "#694B55",
+];
+let stored = {};
+try {
+  stored = JSON.parse(localStorage.getItem("talktheme") || "{}");
+} catch {}
+let s = { images: { chat: null } };
+let activeKey = null,
+  stagedColor = null,
+  stagedPalette = null;
+const $ = (q) => document.querySelector(q),
+  hex = (v) => (/^#[0-9a-f]{6}$/i.test(v) ? v : "#000000");
+function persist() {
+  localStorage.setItem("talktheme", JSON.stringify(s));
+}
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.hidden = false;
+  setTimeout(() => (t.hidden = true), 2800);
+}
+function current() {
+  let v = { ...s };
+  if (stagedPalette) {
+    [v.bg, v.main, v.accent, v.send, v.receive, v.ink] = stagedPalette.slice(1);
+  }
+  if (activeKey && stagedColor) v[activeKey] = stagedColor;
+  return v;
+}
+function openPicker(key) {
+  activeKey = key;
+  stagedColor = s[key];
+  stagedPalette = null;
+  drawPicker();
+  preview();
+}
+function drawPicker() {
+  const p = $("#color-picker-panel");
+  if (!activeKey) {
+    p.hidden = true;
+    return;
+  }
+  p.innerHTML =
+    '<div class="picker-head"><b>' +
+    defs.find((x) => x[1] === activeKey)[0] +
+    ' 색상</b><input type="color" id="staged-color" value="' +
+    stagedColor +
+    '"><code>' +
+    stagedColor +
+    '</code></div><div class="swatches">' +
+    swatches
+      .map(
+        (c) =>
+          '<button type="button" data-swatch="' +
+          c +
+          '" title="' +
+          c +
+          '" style="background:' +
+          c +
+          '"></button>',
+      )
+      .join("") +
+    '</div><div class="picker-actions"><button type="button" data-cancel>취소</button><button type="button" class="apply" data-apply>적용</button></div>';
+  p.hidden = false;
+}
+function paintImageControls() {
+  const image = s.images?.chat,
+    preview = $("#chat-image-preview"),
+    label = $("#chat-image-name");
+  if (!preview || !label) return;
+  preview.style.backgroundImage = image?.data
+    ? 'url("' + image.data + '")'
+    : "none";
+  preview.classList.toggle("has-image", Boolean(image?.data));
+  label.textContent = image?.name || "이미지를 선택해주세요";
+}
+function render() {
+  $("#name").value = s.name;
+  $("#colors").innerHTML = defs
+    .map(
+      ([label, key]) =>
+        '<div class="color-row"><span>' +
+        label +
+        '</span><button type="button" class="color-open" data-color="' +
+        key +
+        '"><i style="background:' +
+        s[key] +
+        '"></i><code>' +
+        s[key] +
+        "</code><span>색 선택</span></button></div>",
+    )
+    .join("");
+  $("#bubble-templates").innerHTML = Object.entries(
+    THEME_DESIGN.spec.bubble.styles,
+  )
+    .map(
+      ([id, style]) =>
+        '<button type="button" class="bubble-template ' +
+        (s.bubbleStyle === id ? "selected" : "") +
+        '" data-bubble-style="' +
+        id +
+        '" aria-pressed="' +
+        (s.bubbleStyle === id) +
+        '"><span class="bubble-sample ' +
+        id +
+        '" style="--template-radius:' +
+        style.radius +
+        'px"><span>가나다</span></span><b>' +
+        style.label +
+        "</b><small>" +
+        style.description +
+        "</small></button>",
+    )
+    .join("");
+  $("#presets").innerHTML = palettes
+    .map(
+      (p) =>
+        '<div class="preset-line"><div class="preset ' +
+        (stagedPalette?.[0] === p[0] ? "selected" : "") +
+        '" data-preset-preview="' +
+        p[0] +
+        '"><small>' +
+        p[0] +
+        "</small>" +
+        p
+          .slice(1, 6)
+          .map((c) => '<i style="background:' + c + '"></i>')
+          .join("") +
+        '<button type="button" data-preset-apply="' +
+        p[0] +
+        '">적용</button></div></div>',
+    )
+    .join("");
+  drawPicker();
+  paintImageControls();
+  preview();
+}
+function preview() {
+  androidInvalidateDownload();
+  const v = current(),
+    chat = $("#chat-preview"),
+    friends = $("#friends-preview");
+  chat.innerHTML =
+    '<div class="chat-screen" data-bubble-style="' +
+    v.bubbleStyle +
+    '"><div class="chat-nav"><span>‹</span><b>오후의 작은 대화</b><span>⌕　☰</span></div><div class="day-pill">오늘 · 오후 2:41</div><div class="message-row"><div class="avatar profile-placeholder" aria-hidden="true"></div><div><small>민지</small><div class="bubble incoming"><span>오늘 날씨 너무 좋다 ☁️<br>산책 갈래?</span></div><time>오후 2:41</time></div></div><div class="message-row mine"><div><div class="bubble outgoing"><span>좋아! 좋아하는 카페도<br>들러가자 🌿</span></div><time>오후 2:42</time></div></div><div class="message-row"><div class="avatar profile-placeholder" aria-hidden="true"></div><div><small>민지</small><div class="bubble incoming"><span>완전 좋아 🤍<br>금방 준비하고 나갈게!</span></div></div></div><div class="chat-spacer"></div><div class="inputbar"><span>＋</span><div>메시지를 입력하세요</div><span>☺</span></div></div>';
+  friends.innerHTML =
+    '<div class="friends-screen"><div class="friends-nav"><b>친구</b><span>⌕　＋　☰</span></div><div class="friend-search">친구 이름 검색</div><div class="friend-caption">내 프로필</div>' +
+    [
+      ["나", "오늘도 좋은 하루"],
+      ["민지", "오늘도 좋은 하루"],
+      ["서연", "산책 갈까요?"],
+      ["지우", "오늘도 좋은 하루"],
+    ]
+      .map(
+        (x, i) =>
+          '<div class="friend-item"><div class="friend-avatar profile-placeholder" aria-hidden="true"></div><div><b>' +
+          x[0] +
+          "</b><small>" +
+          x[1] +
+          "</small></div></div>",
+      )
+      .join("") +
+    '<nav class="fake-tab">' +
+    [
+      ["●", "친구"],
+      ["▤", "채팅"],
+      ["◉", "지금"],
+      ["◇", "쇼핑"],
+      ["•••", "더보기"],
+    ]
+      .map(
+        (x, i) =>
+          '<span style="color:' +
+          (i === 0 ? v.ink : v.accent) +
+          '"><b>' +
+          x[0] +
+          '</b><small style="color:' +
+          v.ink +
+          '">' +
+          x[1] +
+          "</small></span>",
+      )
+      .join("") +
+    "</nav></div>";
+  for (const el of [
+    chat.querySelector(".chat-screen"),
+    friends.querySelector(".friends-screen"),
+    $("#bubble-templates"),
+  ]) {
+    el.style.setProperty("--bg", v.bg);
+    el.style.setProperty("--main", v.main);
+    el.style.setProperty("--accent", v.accent);
+    el.style.setProperty("--send", v.send);
+    el.style.setProperty("--receive", v.receive);
+    el.style.setProperty("--ink", v.ink);
+  }
+  const chatScreen = chat.querySelector(".chat-screen"),
+    friendsScreen = friends.querySelector(".friends-screen");
+  window.PREVIEW_READY = paintPreviewPhoto(chatScreen, v.images?.chat?.data);
+  document.querySelectorAll(".color-open").forEach((b) => {
+    const k = b.dataset.color;
+    b.querySelector("i").style.background = v[k];
+    b.querySelector("code").textContent = v[k];
+  });
+  for (const el of [chatScreen, friendsScreen, $("#bubble-templates")]) {
+    el.style.setProperty(
+      "--bubble-stroke",
+      THEME_DESIGN.spec.bubble.strokeWidth + "px",
+    );
+    el.style.setProperty(
+      "--bubble-min-width",
+      THEME_DESIGN.spec.bubble.width + "px",
+    );
+    el.style.setProperty(
+      "--bubble-min-height",
+      THEME_DESIGN.spec.bubble.height + "px",
+    );
+    el.style.setProperty(
+      "--bubble-radius",
+      THEME_DESIGN.spec.bubble.styles[v.bubbleStyle].radius + "px",
+    );
+    el.style.setProperty(
+      "--bubble-pad-send",
+      THEME_DESIGN.padding(
+        "send",
+        "px",
+        undefined,
+        THEME_DESIGN.spec.bubble.strokeWidth,
+      ),
+    );
+    el.style.setProperty(
+      "--bubble-pad-receive",
+      THEME_DESIGN.padding(
+        "receive",
+        "px",
+        undefined,
+        THEME_DESIGN.spec.bubble.strokeWidth,
+      ),
+    );
+  }
+  const note = document.querySelector(".bubble-note");
+  if (note)
+    note.textContent =
+      "각진·둥근 모서리는 아이폰·안드로이드 공통 설정으로 생성해요.";
+}
 
-async function fitUserImage(templateData,imageData){const template=new Image(),source=new Image();template.src=templateData;source.src=imageData;await Promise.all([template.decode(),source.decode()]);const c=document.createElement('canvas');c.width=template.naturalWidth;c.height=template.naturalHeight;const x=c.getContext('2d');const scale=Math.max(c.width/source.naturalWidth,c.height/source.naturalHeight),sw=c.width/scale,sh=c.height/scale,sx=(source.naturalWidth-sw)/2,sy=(source.naturalHeight-sh)/2;x.drawImage(source,sx,sy,sw,sh,0,0,c.width,c.height);return canvasBlob(c)}
-function rgba(c){const n=parseInt(c.slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255]}function canvasBlob(c){return new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(Error('PNG 생성 실패')),'image/png'))}
-async function recolorPng(data,color){const img=new Image();img.src=data;await img.decode();const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(img,0,0);const im=x.getImageData(0,0,c.width,c.height),d=im.data,[r,g,b]=rgba(color);for(let i=0;i<d.length;i+=4){if(d[i+3]===0)continue;const lum=.299*d[i]+.587*d[i+1]+.114*d[i+2],k=.28+.72*(lum/255);d[i]=Math.round(r*k);d[i+1]=Math.round(g*k);d[i+2]=Math.round(b*k)}x.putImageData(im,0,0);return canvasBlob(c)}
-async function solidPng(data,color){const im=new Image();im.src=data;await im.decode();const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.fillStyle=color;x.fillRect(0,0,c.width,c.height);return canvasBlob(c)}
-async function neutralProfile(data,v){const im=new Image();im.src=data;await im.decode();const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.fillStyle=v.accent;x.fillRect(0,0,c.width,c.height);x.fillStyle=v.main;x.beginPath();x.arc(c.width/2,c.height*.36,c.width*.14,0,Math.PI*2);x.fill();x.beginPath();x.ellipse(c.width/2,c.height*.82,c.width*.3,c.height*.31,0,Math.PI,Math.PI*2);x.fill();return canvasBlob(c)}
-function waveH(ctx,start,end,y,amp,scale,firstSign){const dir=Math.sign(end-start),distance=Math.abs(end-start),cycles=Math.max(2,Math.round(distance/(18*scale))),half=distance/(cycles*2);let p=start,sign=firstSign;for(let i=0;i<cycles*2;i++){const n=p+dir*half;ctx.bezierCurveTo(p+dir*half*.22,y,p+dir*half*.78,y+sign*amp*2,n,y);p=n;sign*=-1}}
-function waveV(ctx,start,end,x,amp,scale,firstSign){const dir=Math.sign(end-start),distance=Math.abs(end-start),cycles=Math.max(2,Math.round(distance/(18*scale))),half=distance/(cycles*2);let p=start,sign=firstSign;for(let i=0;i<cycles*2;i++){const n=p+dir*half;ctx.bezierCurveTo(x,p+dir*half*.22,x+sign*amp*2,p+dir*half*.78,x,n);p=n;sign*=-1}}
-function waveBubblePath(ctx,left,top,w,h,scale){const amp=2.2*scale,x0=left+amp,y0=top+amp,x1=left+w-amp,y1=top+h-amp,r=amp*1.2;ctx.beginPath();ctx.moveTo(x0+r,y0);waveH(ctx,x0+r,x1-r,y0,amp,scale,-1);ctx.quadraticCurveTo(x1,y0,x1,y0+r);waveV(ctx,y0+r,y1-r,x1,amp,scale,1);ctx.quadraticCurveTo(x1,y1,x1-r,y1);waveH(ctx,x1-r,x0+r,y1,amp,scale,1);ctx.quadraticCurveTo(x0,y1,x0,y1-r);waveV(ctx,y1-r,y0+r,x0,amp,scale,-1);ctx.quadraticCurveTo(x0,y0,x0+r,y0);ctx.closePath()}
-function resizeWavePreview(svg){const {width:w,height:h}=svg.getBoundingClientRect();if(!w||!h)return;const parts=[],path={beginPath(){},moveTo(...p){parts.push('M'+p.join(' '))},bezierCurveTo(...p){parts.push('C'+p.join(' '))},quadraticCurveTo(...p){parts.push('Q'+p.join(' '))},closePath(){parts.push('Z')}};waveBubblePath(path,0,0,w,h,1);svg.setAttribute('viewBox',`0 0 ${w} ${h}`);svg.querySelector('path').setAttribute('d',parts.join(' '))}
-const wavePreviewObserver=new ResizeObserver(entries=>entries.forEach(({target})=>resizeWavePreview(target)));
-function refreshWavePreviews(){wavePreviewObserver.disconnect();document.querySelectorAll('.bubble-wave,.sample-wave').forEach(svg=>{resizeWavePreview(svg);wavePreviewObserver.observe(svg)})}
-async function cleanBubble(data,fill,border,style){const im=new Image();im.src=data;await im.decode();const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d'),scale=c.height/35,pad=scale,left=pad,top=pad,w=c.width-pad*2,h=c.height-pad*2,r=({square:1,rounded:12,dashed:9,wave:5})[style]*scale;x.clearRect(0,0,c.width,c.height);if(style==='wave')waveBubblePath(x,left,top,w,h,scale);else{x.beginPath();x.roundRect(left,top,w,h,r)}x.fillStyle=fill;x.fill();x.lineWidth=(style==='wave'?1.2:1)*scale;x.strokeStyle=border;if(style==='dashed')x.setLineDash([3*scale,2*scale]);x.stroke();return canvasBlob(c)}
-const TAB_GLYPHS={Friends:'●',Chats:'▤',Now:'◉',Local:'⌖',Piccoma:'▣',Shopping:'◇',Call:'☎',More:'•••'};
-const TAB_LABELS={Friends:'친구',Chats:'채팅',Now:'지금',Local:'로컬',Piccoma:'만화',Shopping:'쇼핑',Call:'통화',More:'더보기'};
-// iOS custom tab assets include the label, so reserve separate icon and text areas.
-async function iosTabAsset(data,type,selected,v){const im=new Image();im.src=data;await im.decode();const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.textAlign='center';x.textBaseline='middle';x.fillStyle=selected?v.ink:v.accent;x.font=`${Math.round(c.height*(type==='More'?.34:.52))}px Arial`;x.fillText(TAB_GLYPHS[type],c.width/2,c.height*.31);x.fillStyle=v.ink;x.font=`500 ${Math.round(c.height*.25)}px -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif`;x.fillText(TAB_LABELS[type],c.width/2,c.height*.81,c.width*.9);return canvasBlob(c)}
-async function glyphAsset(data,glyph,color){const im=new Image();im.src=data;await im.decode();const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.fillStyle=color;x.textAlign='center';x.textBaseline='middle';x.font=`${Math.round(c.height*(glyph==='•••'?.29:.43))}px Arial`;x.fillText(glyph,c.width/2,c.height*.5);return canvasBlob(c)}
-async function themeIcon(data,v){const im=new Image();im.src=data;await im.decode();const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.fillStyle=v.main;x.fillRect(0,0,c.width,c.height);x.fillStyle=v.send;x.strokeStyle=v.accent;x.lineWidth=Math.max(2,c.width*.018);x.beginPath();x.roundRect(c.width*.14,c.height*.18,c.width*.65,c.height*.38,c.width*.1);x.fill();x.stroke();x.beginPath();x.moveTo(c.width*.32,c.height*.54);x.lineTo(c.width*.25,c.height*.67);x.lineTo(c.width*.47,c.height*.54);x.fill();x.fillStyle=v.receive;x.beginPath();x.roundRect(c.width*.35,c.height*.46,c.width*.51,c.height*.34,c.width*.1);x.fill();x.stroke();return canvasBlob(c)}
-async function passcodeDot(data,color,filled){const im=new Image();im.src=data;await im.decode();const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.beginPath();x.arc(c.width/2,c.height/2,c.width*.24,0,Math.PI*2);x.fillStyle=filled?color:'rgba(255,255,255,0.35)';x.fill();x.lineWidth=Math.max(2,c.width*.025);x.strokeStyle=color;x.stroke();return canvasBlob(c)}
-function setBlock(css,selector,updates){const re=new RegExp('('+selector+'\\s*\\{)([\\s\\S]*?)(\\})');return css.replace(re,(_,a,body,z)=>{for(const [prop,val] of Object.entries(updates)){const p=prop.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\$&'),rx=new RegExp('(^|\\n)(\\s*'+p+'\\s*:\\s*)([^;]*)(;)','m');if(rx.test(body))body=body.replace(rx,(_,n,k)=>n+k+val+';');else body+='\n    '+prop+': '+val+';'}return a+body+z})}
-function themeId(name){const slug=safeName(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'custom';let h=2166136261;for(const ch of name){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return 'com.talktheme.studio.'+slug+'-'+(h>>>0).toString(36)}
-function themeCss(v){let c=window.SAMPLE_THEME_CSS;if(!c)throw Error('공식 샘플 CSS가 로드되지 않았습니다.');const replacements=[[/(-kakaotalk-theme-name:\s*)'[^']*'/,`$1'${v.name.replace(/['\\]/g,'')}'`],[/-kakaotalk-author-name:\s*'[^']*'/,"-kakaotalk-author-name: 'TalkTheme Studio'"],[/-kakaotalk-theme-id:\s*'[^']*'/,"-kakaotalk-theme-id: '"+themeId(v.name)+"'"]];for(const [re,to] of replacements)c=c.replace(re,to);const sets={'TabBarStyle-Main':{'background-color':v.main,'-background-sidebar-color':v.main},'HeaderStyle-Main':{'-ios-text-color':v.ink,'-ios-tab-text-color':v.accent,'-ios-tab-highlighted-text-color':v.ink},'MainViewStyle-Primary':{'background-color':v.main,'-ios-text-color':v.ink,'-ios-highlighted-text-color':v.accent,'-ios-description-text-color':v.ink,'-ios-description-highlighted-text-color':v.accent,'-ios-paragraph-text-color':v.ink,'-ios-paragraph-highlighted-text-color':v.accent,'-ios-selected-background-color':v.accent},'MainViewStyle-Secondary':{'background-color':v.main},'SectionTitleStyle-Main':{'-ios-text-color':v.accent},'FeatureStyle-Primary':{'-ios-text-color':v.ink},'ButtonStyle-Main':{'background-color':v.bg,'-ios-highlighted-background-color':v.accent,'-ios-selected-background-color':v.accent},'BackgroundStyle-ChatRoom':{'background-color':v.bg},'InputBarStyle-Chat':{'background-color':v.main,'-ios-send-normal-background-color':v.accent,'-ios-send-normal-foreground-color':v.ink,'-ios-send-highlighted-background-color':v.accent,'-ios-send-highlighted-foreground-color':v.main,'-ios-button-normal-foreground-color':v.accent,'-ios-button-highlighted-foreground-color':v.ink,'-ios-button-text-color':v.ink},'MessageCellStyle-Send':{'-ios-title-edgeinsets':'14px 11px 10px 17px','-ios-group-title-edgeinsets':'14px 11px 10px 17px','-ios-text-color':v.ink,'-ios-selected-text-color':v.ink,'-ios-unread-text-color':v.accent},'MessageCellStyle-Receive':{'-ios-title-edgeinsets':'14px 17px 10px 11px','-ios-group-title-edgeinsets':'14px 17px 10px 11px','-ios-text-color':v.ink,'-ios-selected-text-color':v.ink,'-ios-unread-text-color':v.accent},'BackgroundStyle-Passcode':{'background-color':v.bg},'LabelStyle-PasscodeTitle':{'-ios-text-color':v.ink},'PasscodeStyle':{'-ios-keypad-background-color':v.main,'-ios-keypad-text-normal-color':v.ink},'BackgroundStyle-MessageNotificationBar':{'background-color':v.send},'LabelStyle-MessageNotificationBarName':{'-ios-text-color':v.ink},'LabelStyle-MessageNotificationBarMessage':{'-ios-text-color':v.ink},'BackgroundStyle-DirectShareBar':{'background-color':v.main},'LabelStyle-DirectShareBarName':{'-ios-text-color':v.accent},'LabelStyle-DirectShareBarMessage':{'-ios-text-color':v.ink},'BottomBannerStyle':{'background-color':v.accent},'BottomBannerStyle-Light':{'background-color':v.accent}};for(const [k,u] of Object.entries(sets))c=setBlock(c,k,u);c=c.replace(/(-ios-(?:selected-|group-|group-selected-)?background-image:\s*'chatroomBubble[^']+\.png')\s+\d+px\s+\d+px;/g,'$1 20px 17px;');c=c.replace(/-ios-background-image:\s*'chatroomBgImage\.png';/g,'').replace(/-ios-background-image:\s*'mainBgImage\.png';/g,'').replace(/-ios-background-image:\s*'passcodeBgImage\.png';/g,'');c=c.replace(/-ios-background-image:\s*'maintabBgImage\.png';/g,'');if(v.images?.chat?.data)c=c.replace('BackgroundStyle-ChatRoom\n{','BackgroundStyle-ChatRoom\n{\n    -ios-background-image: \'chatroomBgImage.png\';');return c}
-async function assertCenterColor(entry,color){const blob=entry.data instanceof Blob?entry.data:new Blob([entry.data]);const bmp=await createImageBitmap(blob),c=document.createElement('canvas');c.width=bmp.width;c.height=bmp.height;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bmp,0,0);const px=x.getImageData(Math.floor(c.width/2),Math.floor(c.height/2),1,1).data,[r,g,b]=rgba(color);if(Math.abs(px[0]-r)>1||Math.abs(px[1]-g)>1||Math.abs(px[2]-b)>1||px[3]<250)throw Error('이미지 색상이 미리보기 설정과 다릅니다: '+entry.name);bmp.close()}
-async function validateThemeEntries(entries,v){const byName=new Map(entries.map(e=>[e.name,e]));if(!byName.has('KakaoTalkTheme.css')||![...byName.keys()].some(n=>n.startsWith('Images/')))throw Error('테마 CSS 또는 Images 폴더가 없습니다.');if([...byName.keys()].some(n=>n.startsWith('/')||n.includes('..')||n.includes('__MACOSX')||n.includes('.DS_Store')||n.includes('/._')))throw Error('압축에 허용되지 않는 경로 또는 메타데이터가 있습니다.');const names=[...byName.keys()].filter(n=>n.startsWith('Images/')).map(n=>n.slice(7));const missing=Object.keys(window.THEME_FILES).filter(n=>!names.includes(n));if(missing.length)throw Error('샘플 이미지 누락: '+missing.slice(0,3).join(', '));const css=new TextDecoder().decode(byName.get('KakaoTalkTheme.css').data);for(const color of [v.bg,v.main,v.accent,v.ink])if(!css.toLowerCase().includes(color.toLowerCase()))throw Error('선택한 색상이 CSS에 반영되지 않았습니다: '+color);const refs=[...css.matchAll(/-ios-[\w-]*image\s*:\s*'([^']+\.png)'/g)].map(m=>m[1]);for(const ref of refs){const base=ref.replace(/\.png$/,'');if(!names.some(n=>n===ref||n.startsWith(base+'@')))throw Error('CSS 이미지 참조가 패키지에 없습니다: '+ref)}for(const e of entries){if(e.name.endsWith('.png')){const data=e.data instanceof Blob?new Uint8Array(await e.data.arrayBuffer()):e.data;if(data[0]!==137||data[1]!==80||data[2]!==78||data[3]!==71)throw Error('PNG 리소스가 손상되었습니다: '+e.name)}}for(const e of entries){const n=e.name.slice(7);if(n.startsWith('chatroomBubbleSend'))await assertCenterColor(e,v.send);else if(n.startsWith('chatroomBubbleReceive'))await assertCenterColor(e,v.receive);else if(n==='chatroomBgImage@3x.png'||n==='passcodeBgImage@3x.png'){if(!(n==='chatroomBgImage@3x.png'&&v.images?.chat?.data))await assertCenterColor(e,v.bg);}else if(n==='mainBgImage@3x.png'||n==='maintabBgImage@2x.png'||n==='maintabBgImage@3x.png')await assertCenterColor(e,v.main)}return{fileCount:entries.length,images:names.length,cssReferences:refs.length}}
-async function buildKtheme(v=current()){v=structuredClone(v);if(!window.THEME_FILES||!window.SAMPLE_THEME_CSS)throw Error('공식 샘플 파일을 읽지 못했습니다.');const entries=[{name:'KakaoTalkTheme.css',data:new TextEncoder().encode(themeCss(v))}];const assets=window.THEME_FILES;for(const [name,data] of Object.entries(assets)){let image;if(name==='chatroomBgImage@3x.png'&&v.images?.chat?.data)image=await fitUserImage(data,v.images.chat.data);else if(name==='chatroomBgImage@3x.png'||name==='mainBgImage@3x.png'||name==='maintabBgImage@2x.png'||name==='maintabBgImage@3x.png'||name==='passcodeBgImage@3x.png')image=await solidPng(data,name.startsWith('chatroom')||name.startsWith('passcode')?v.bg:v.main);else if(name==='commonIcoTheme.png')image=await themeIcon(data,v);else if(name.startsWith('findBtnAddFriend@'))image=await glyphAsset(data,'+',v.accent);else if(name==='profileImg01@3x.png')image=await neutralProfile(data,v);else if(/^maintabIco/.test(name)){const type=Object.keys(TAB_GLYPHS).find(k=>name.includes(k))||'More',selected=name.includes('Selected');image=await iosTabAsset(data,type,selected,v)}else if(/^chatroomBubble(Send|Receive)/.test(name)){const color=name.includes('Send')?v.send:v.receive;image=await cleanBubble(data,color,v.accent,v.bubbleStyle)}else if(/^passcodeImgCode/.test(name)){const filled=name.includes('Selected');image=await passcodeDot(data,v.accent,filled)}else if(name==='passcodeKeypadPressed@3x.png')image=await solidPng(data,v.accent);else image=await fetch(data).then(r=>r.arrayBuffer()).then(b=>new Uint8Array(b));entries.push({name:'Images/'+name,data:image})}const report=await validateThemeEntries(entries,v);const zip=await createZip(entries);const archiveCheck=await verifyZip(zip,entries);if(zip.size<1000)throw Error('생성된 테마 압축 파일 크기가 비정상적으로 작습니다.');return{zip,report,archiveCheck,name:safeName(v.name)}}
-async function makeKtheme(v=current()){const result=await buildKtheme(v);download(result.zip,result.name+'.ktheme');toast(`패키지 확인 완료 · ${result.report.images}개 이미지 · ZIP ${result.archiveCheck.fileCount}개 파일 검증`)}
-const crcTable=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xedb88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();function crc32(d){let c=0xffffffff;for(const b of d)c=crcTable[(c^b)&255]^(c>>>8);return(c^0xffffffff)>>>0}function u16(n){return[n&255,(n>>>8)&255]}function u32(n){return[n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]}function cat(parts){const out=new Uint8Array(parts.reduce((n,p)=>n+p.length,0));let o=0;for(const p of parts){out.set(p,o);o+=p.length}return out}
-async function createZip(entries){const local=[],central=[];let offset=0;for(const e of entries){const name=new TextEncoder().encode(e.name),data=e.data instanceof Blob?new Uint8Array(await e.data.arrayBuffer()):e.data,crc=crc32(data),head=cat([new Uint8Array([0x50,0x4b,0x03,0x04]),new Uint8Array(u16(20)),new Uint8Array(u16(0x0800)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(crc)),new Uint8Array(u32(data.length)),new Uint8Array(u32(data.length)),new Uint8Array(u16(name.length)),new Uint8Array(u16(0)),name,data]);local.push(head);central.push(cat([new Uint8Array([0x50,0x4b,0x01,0x02]),new Uint8Array(u16(20)),new Uint8Array(u16(20)),new Uint8Array(u16(0x0800)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(crc)),new Uint8Array(u32(data.length)),new Uint8Array(u32(data.length)),new Uint8Array(u16(name.length)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u32(0)),new Uint8Array(u32(offset)),name]));offset+=head.length}const cdir=cat(central),end=cat([new Uint8Array([0x50,0x4b,0x05,0x06]),new Uint8Array(u16(0)),new Uint8Array(u16(0)),new Uint8Array(u16(entries.length)),new Uint8Array(u16(entries.length)),new Uint8Array(u32(cdir.length)),new Uint8Array(u32(offset)),new Uint8Array(u16(0))]);return new Blob([...local,cdir,end],{type:'application/octet-stream'})}
-async function verifyZip(blob,expected){const bytes=new Uint8Array(await blob.arrayBuffer()),map=new Map();let offset=0;while(offset+4<=bytes.length&&bytes[offset]===0x50&&bytes[offset+1]===0x4b&&bytes[offset+2]===0x03&&bytes[offset+3]===0x04){const view=new DataView(bytes.buffer,bytes.byteOffset+offset),method=view.getUint16(8,true),crc=view.getUint32(14,true),size=view.getUint32(22,true),nameLen=view.getUint16(26,true),extraLen=view.getUint16(28,true),nameStart=offset+30,name=new TextDecoder().decode(bytes.subarray(nameStart,nameStart+nameLen)),start=nameStart+nameLen+extraLen,end=start+size;if(method!==0||end>bytes.length)throw Error('압축 파일 항목의 형식이 올바르지 않습니다: '+name);const data=bytes.slice(start,end);if(crc32(data)!==crc)throw Error('ZIP 체크섬 불일치: '+name);map.set(name,data);offset=end}if(bytes[offset]!==0x50||bytes[offset+1]!==0x4b||bytes[offset+2]!==0x01||bytes[offset+3]!==0x02)throw Error('ZIP 중앙 디렉터리가 없습니다.');if(map.size!==expected.length)throw Error('ZIP 내부 파일 개수가 예상과 다릅니다.');for(const e of expected){const got=map.get(e.name);if(!got)throw Error('ZIP에서 파일을 찾지 못했습니다: '+e.name);const raw=e.data instanceof Blob?new Uint8Array(await e.data.arrayBuffer()):e.data;if(got.length!==raw.length||got.some((n,i)=>n!==raw[i]))throw Error('ZIP 내부 파일이 패키지 원본과 다릅니다: '+e.name)}return{fileCount:map.size,verifiedBytes:bytes.length}}
-document.addEventListener('click',e=>{const bubbleChoice=e.target.closest('[data-bubble-style]');if(bubbleChoice){s.bubbleStyle=bubbleChoice.dataset.bubbleStyle;persist();render();return}const color=e.target.closest('[data-color]');if(color){openPicker(color.dataset.color);return}const sw=e.target.closest('[data-swatch]');if(sw&&activeKey){stagedColor=sw.dataset.swatch;drawPicker();preview();return}if(e.target.closest('[data-apply]')&&activeKey){const finalColor=$('#staged-color');if(finalColor)stagedColor=hex(finalColor.value);s[activeKey]=stagedColor;activeKey=null;stagedColor=null;stagedPalette=null;persist();render();return}if(e.target.closest('[data-cancel]')){activeKey=null;stagedColor=null;stagedPalette=null;render();return}const pv=e.target.closest('[data-preset-preview]');if(pv&&!e.target.closest('[data-preset-apply]')){activeKey=null;stagedColor=null;stagedPalette=palettes.find(p=>p[0]===pv.dataset.presetPreview);render();return}const ap=e.target.closest('[data-preset-apply]');if(ap){const p=palettes.find(x=>x[0]===ap.dataset.presetApply);[s.bg,s.main,s.accent,s.send,s.receive,s.ink]=p.slice(1);activeKey=null;stagedColor=null;stagedPalette=null;persist();render();return}});document.addEventListener('input',e=>{if(e.target.id==='name'){s.name=e.target.value;persist()}if(e.target.id==='staged-color'&&activeKey){stagedColor=hex(e.target.value);$('#color-picker-panel code').textContent=stagedColor;preview()}});
-document.addEventListener('change',e=>{if(e.target.id==='staged-color'&&activeKey){stagedColor=hex(e.target.value);const code=$('#color-picker-panel code');if(code)code.textContent=stagedColor;preview()}});async function normalizeUserImage(file){if(!file.type.startsWith('image/'))throw Error('이미지 파일을 선택해주세요.');if(file.size>20*1024*1024)throw Error('이미지 파일은 20MB 이하로 선택해주세요.');const bitmap=await createImageBitmap(file);try{const max=1440,scale=Math.min(1,max/Math.max(bitmap.width,bitmap.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(bitmap.width*scale));c.height=Math.max(1,Math.round(bitmap.height*scale));c.getContext('2d').drawImage(bitmap,0,0,c.width,c.height);return{data:c.toDataURL('image/jpeg',.84),name:file.name}}finally{bitmap.close()}}
-$('[data-image-input="chat"]').addEventListener('change',async e=>{const file=e.currentTarget.files?.[0];if(!file)return;try{s.images.chat=await normalizeUserImage(file);persist();render();toast('채팅 배경을 적용했어요.')}catch(err){toast('이미지를 불러오지 못했어요: '+err.message)}e.currentTarget.value=''});
-document.addEventListener('click',e=>{const button=e.target.closest('[data-remove-image]');if(!button)return;const key=button.dataset.removeImage;if(key!=='chat')return;s.images.chat=null;const input=$('[data-image-input="chat"]');if(input)input.value='';persist();render();toast('업로드 이미지를 제거했어요.')});
-$('#installGuide').onclick=()=>$('#install-modal').showModal();$('#install-modal .modal-close').onclick=()=>$('#install-modal').close();$('#install-modal').addEventListener('click',e=>{if(e.target===$('#install-modal'))$('#install-modal').close()});document.querySelectorAll('[data-guide-tab]').forEach(tab=>tab.addEventListener('click',()=>{document.querySelectorAll('[data-guide-tab]').forEach(b=>{b.classList.toggle('active',b===tab);b.setAttribute('aria-selected',b===tab?'true':'false')});document.querySelectorAll('[data-guide-panel]').forEach(panel=>panel.hidden=panel.dataset.guidePanel!==tab.dataset.guideTab)}));$('#export').onclick=async()=>{const b=$('#export');b.disabled=true;try{await makeKtheme()}catch(err){console.error(err);toast('내보내기 실패: '+err.message)}finally{b.disabled=false}};
-async function unzipAndroidTemplate(){const r=await fetch('android-apk-service/template.zip');if(!r.ok)throw Error('Android 공식 샘플 ZIP 다운로드에 실패했습니다.');const b=new Uint8Array(await r.arrayBuffer());const v=new DataView(b.buffer);let eocd=-1;for(let i=b.length-22;i>=Math.max(0,b.length-65557);i--)if(v.getUint32(i,true)===0x06054b50){eocd=i;break}if(eocd<0)throw Error('Android 샘플 ZIP의 끝 레코드를 찾지 못했습니다.');const count=v.getUint16(eocd+10,true);let offset=v.getUint32(eocd+16,true);const files=new Map(),dec=new TextDecoder();for(let n=0;n<count;n++){if(v.getUint32(offset,true)!==0x02014b50)throw Error('Android 샘플 중앙 디렉터리가 손상됐습니다.');const method=v.getUint16(offset+10,true),crc=v.getUint32(offset+16,true),packedSize=v.getUint32(offset+20,true),nameLength=v.getUint16(offset+28,true),extraLength=v.getUint16(offset+30,true),commentLength=v.getUint16(offset+32,true),localOffset=v.getUint32(offset+42,true),name=dec.decode(b.subarray(offset+46,offset+46+nameLength));offset+=46+nameLength+extraLength+commentLength;if(name.endsWith('/'))continue;if(name.startsWith('/')||name.split('/').includes('..'))throw Error('Android 샘플에 안전하지 않은 경로가 있습니다.');if(v.getUint32(localOffset,true)!==0x04034b50)throw Error('Android 샘플 로컬 헤더가 손상됐습니다: '+name);const localName=v.getUint16(localOffset+26,true),localExtra=v.getUint16(localOffset+28,true),start=localOffset+30+localName+localExtra,compressed=b.slice(start,start+packedSize);let data;if(method===0)data=compressed;else if(method===8){const stream=new Blob([compressed]).stream().pipeThrough(new DecompressionStream('deflate-raw'));data=new Uint8Array(await new Response(stream).arrayBuffer())}else throw Error('Android 샘플에서 지원하지 않는 압축 방식입니다: '+method);if(crc32(data)!==crc)throw Error('Android 샘플 체크섬이 맞지 않습니다: '+name);files.set(name,data)}for(const name of ['build.gradle.kts','src/main/AndroidManifest.xml','src/main/theme/values/colors.xml'])if(!files.has(name))throw Error('Android 샘플 필수 파일이 없습니다: '+name);return files}
-function androidPackageId(name){let s=safeName(name).toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,18)||'theme',h=2166136261;for(const c of name){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return'com.talktheme.studio.t'+s+(h>>>0).toString(36)}
-function androidPatchColors(xml,v){const c={theme_header_color:v.ink,theme_section_title_color:v.accent,theme_title_color:v.ink,theme_title_pressed_color:v.accent,theme_paragraph_color:v.ink,theme_paragraph_pressed_color:v.accent,theme_description_color:v.ink,theme_description_pressed_color:v.accent,theme_feature_primary_color:v.accent,theme_feature_primary_pressed_color:v.accent,theme_feature_browse_tab_color:v.accent,theme_feature_browse_tab_focused_color:v.ink,theme_background_color:v.main,theme_chatroom_background_color:v.bg,theme_passcode_background_color:v.bg,theme_header_cell_color:v.main,theme_body_cell_color:v.main,theme_body_cell_pressed_color:v.accent,theme_body_cell_border_color:v.accent,theme_body_secondary_cell_color:v.main,theme_maintab_cell_color:v.main,theme_tab_lightbannerbadge_background_color:v.accent,theme_tab_bannerbadge_background_color:v.accent,theme_direct_share_color:v.ink,theme_direct_share_button_color:v.accent,theme_direct_share_background_color:v.main,theme_notification_color:v.ink,theme_notification_background_color:v.main,theme_notification_background_pressed_color:v.accent,theme_passcode_color:v.ink,theme_passcode_keypad_color:v.ink,theme_passcode_keypad_pressed_color:v.accent,theme_passcode_keypad_background_color:v.main,theme_passcode_keypad_pressed_background_color:v.accent,theme_passcode_pattern_line_color:v.accent,theme_chatroom_bubble_me_color:v.ink,theme_chatroom_bubble_you_color:v.ink,theme_chatroom_unread_count_color:v.accent,theme_chatroom_input_bar_color:v.ink,theme_chatroom_input_bar_background_color:v.main,theme_chatroom_input_bar_menu_icon_color:v.accent,theme_chatroom_input_bar_menu_button_color:v.accent,theme_chatroom_input_bar_send_icon_color:v.ink,theme_chatroom_input_bar_send_button_color:v.accent,theme_button_background_color:v.accent,theme_button_pressed_background_color:v.accent,theme_button_selected_background_color:v.accent,theme_navigationbar_background_color:v.main,theme_navigationrail_background_color:v.main};for(const[k,x]of Object.entries(c)){const re=new RegExp('(<color\\s+name="'+k+'">)[\\s\\S]*?(<\\/color>)');if(re.test(xml))xml=xml.replace(re,'$1'+x.toUpperCase()+'$2')}return xml}
-async function androidPngBytes(blob){return new Uint8Array(await blob.arrayBuffer())}
-async function androidSolid(bytes,color){const im=await createImageBitmap(new Blob([bytes])),c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.fillStyle=color;x.fillRect(0,0,c.width,c.height);im.close();return androidPngBytes(await canvasBlob(c))}
-async function androidFit(bytes,data){const im=await createImageBitmap(new Blob([bytes])),src=new Image();src.src=data;await src.decode();const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d'),scale=Math.max(c.width/src.naturalWidth,c.height/src.naturalHeight),w=c.width/scale,h=c.height/scale;x.drawImage(src,(src.naturalWidth-w)/2,(src.naturalHeight-h)/2,w,h,0,0,c.width,c.height);im.close();return androidPngBytes(await canvasBlob(c))}
-async function androidIcon(bytes,v){const im=await createImageBitmap(new Blob([bytes])),c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.fillStyle=v.main;x.fillRect(0,0,c.width,c.height);x.fillStyle=v.send;x.strokeStyle=v.accent;x.lineWidth=Math.max(2,c.width*.018);x.beginPath();x.roundRect(c.width*.16,c.height*.18,c.width*.66,c.height*.42,c.width*.1);x.fill();x.stroke();x.fillStyle=v.receive;x.beginPath();x.roundRect(c.width*.36,c.height*.46,c.width*.48,c.height*.34,c.width*.1);x.fill();x.stroke();im.close();return androidPngBytes(await canvasBlob(c))}
-async function androidResource(path,data,v){if(/theme_chatroom_bubble_(me|you)_0[12]_image\.9\.png$/.test(path))return data;if(path.endsWith('theme_chatroom_background_image.png'))return v.images?.chat?.data?androidFit(data,v.images.chat.data):androidSolid(data,v.bg);if(path.endsWith('theme_background_image.png')||path.endsWith('theme_passcode_background_image.png')||path.endsWith('theme_splash_image.png'))return androidSolid(data,path.endsWith('theme_background_image.png')?v.main:v.bg);const icon=path.match(/theme_maintab_ico_(friends|chats|local|now|piccoma|shopping|call|more)(_focused)?_image\.png$/);if(icon){const type=icon[1][0].toUpperCase()+icon[1].slice(1);return androidTabAsset(data,type,Boolean(icon[2]),v)}if(path.includes('theme_find_add_friend_button_'))return androidGlyph(data,'+',v.accent);if(path.endsWith('theme_profile_01_image.png'))return androidProfile(data,v);if(/theme_passcode_0[1-4](_checked)?_image\.png$/.test(path))return androidDot(data,v.accent,path.includes('_checked'));if(path.endsWith('theme_maintab_cell_image.9.png'))return androidNinePatchFill(data,v.main);if(/src\/main\/res\/mipmap-[^/]+\/ic_launcher/.test(path))return androidIcon(data,v);return data}
-async function makeAndroidProjectZip(v=current()){const files=await unzipAndroidTemplate(),pkg=androidPackageId(v.name),enc=new TextEncoder(),dec=new TextDecoder();let gradle=dec.decode(files.get('build.gradle.kts')).replace(/applicationId\s*=\s*"[^"]+"/,'applicationId = "'+pkg+'"');if(!gradle.includes(pkg))throw Error('Gradle package 설정을 바꾸지 못했습니다.');files.set('build.gradle.kts',enc.encode(gradle));for(const[path,data]of [...files]){if(/src\/main\/theme\/values(?:-[^/]+)?\/strings\.xml$/.test(path)){const xml=dec.decode(data).replace(/(<string\s+name="(?:theme_title|app_name)">)[\s\S]*?(<\/string>)/g,(_,open,close)=>open+androidStringValue(v.name)+close);files.set(path,enc.encode(xml))}if(path==='src/main/theme/values/colors.xml')files.set(path,enc.encode(androidPatchColors(dec.decode(data),v)));if(path==='src/main/res/values/colors.xml')files.set(path,enc.encode(dec.decode(data).replace(/(<color\s+name="statusBarColor">)[\s\S]*?(<\/color>)/,'$1'+v.main+'$2')))}const jobs=[];for(const[path,data]of files){if(!path.endsWith('.png'))continue;if(path.startsWith('src/main/theme/'))jobs.push([path,androidResource(path,data,v)]);else if(/src\/main\/res\/mipmap-[^/]+\/ic_launcher/.test(path))jobs.push([path,androidIcon(data,v)])}const outputs=await Promise.all(jobs.map(async([p,q])=>[p,await q]));for(const[p,d]of outputs)files.set(p,d);files.set('talktheme-bubbles.json',enc.encode(JSON.stringify({version:1,style:v.bubbleStyle,send:v.send,receive:v.receive,border:v.accent})));const entries=[...files].map(([name,data])=>({name,data,executable:name==='gradlew'})),zip=await createZip(entries),check=await verifyZip(zip,entries);if(check.fileCount!==entries.length)throw Error('ZIP 검증에 실패했습니다.');return {zip,name:safeName(v.name),packageId:pkg}}
-$('#exportAndroid').onclick=exportAndroidApk;$('#reset').onclick=()=>{s={...DEFAULTS,images:{chat:null}};activeKey=null;stagedColor=null;stagedPalette=null;persist();render();toast('컬러 초안을 초기화했어요.')};render();
+let previewPhotoRevision = 0,
+  previewPhotoUrl = null;
+async function paintPreviewPhoto(screen, imageData) {
+  const revision = ++previewPhotoRevision;
+  if (previewPhotoUrl) {
+    URL.revokeObjectURL(previewPhotoUrl);
+    previewPhotoUrl = null;
+  }
+  if (!imageData) return;
+  try {
+    const blob = await commonBackground(imageData);
+    if (revision !== previewPhotoRevision || !screen.isConnected) return;
+    previewPhotoUrl = URL.createObjectURL(blob);
+    screen.style.backgroundImage = 'url("' + previewPhotoUrl + '")';
+  } catch (error) {
+    if (revision === previewPhotoRevision)
+      toast("배경 이미지를 미리볼 수 없어요: " + error.message);
+  }
+}
 
+document.addEventListener("click", (e) => {
+  const bubbleChoice = e.target.closest("[data-bubble-style]");
+  if (bubbleChoice) {
+    s.bubbleStyle = bubbleChoice.dataset.bubbleStyle;
+    persist();
+    render();
+    return;
+  }
+  const color = e.target.closest("[data-color]");
+  if (color) {
+    openPicker(color.dataset.color);
+    return;
+  }
+  const sw = e.target.closest("[data-swatch]");
+  if (sw && activeKey) {
+    stagedColor = sw.dataset.swatch;
+    drawPicker();
+    preview();
+    return;
+  }
+  if (e.target.closest("[data-apply]") && activeKey) {
+    const finalColor = $("#staged-color");
+    if (finalColor) stagedColor = hex(finalColor.value);
+    s[activeKey] = stagedColor;
+    activeKey = null;
+    stagedColor = null;
+    stagedPalette = null;
+    persist();
+    render();
+    return;
+  }
+  if (e.target.closest("[data-cancel]")) {
+    activeKey = null;
+    stagedColor = null;
+    stagedPalette = null;
+    render();
+    return;
+  }
+  const pv = e.target.closest("[data-preset-preview]");
+  if (pv && !e.target.closest("[data-preset-apply]")) {
+    activeKey = null;
+    stagedColor = null;
+    stagedPalette = palettes.find((p) => p[0] === pv.dataset.presetPreview);
+    render();
+    return;
+  }
+  const ap = e.target.closest("[data-preset-apply]");
+  if (ap) {
+    const p = palettes.find((x) => x[0] === ap.dataset.presetApply);
+    [s.bg, s.main, s.accent, s.send, s.receive, s.ink] = p.slice(1);
+    activeKey = null;
+    stagedColor = null;
+    stagedPalette = null;
+    persist();
+    render();
+    return;
+  }
+});
+document.addEventListener("input", (e) => {
+  if (e.target.id === "name") {
+    s.name = e.target.value;
+    persist();
+  }
+  if (e.target.id === "staged-color" && activeKey) {
+    stagedColor = hex(e.target.value);
+    $("#color-picker-panel code").textContent = stagedColor;
+    preview();
+  }
+});
+document.addEventListener("change", (e) => {
+  if (e.target.id === "staged-color" && activeKey) {
+    stagedColor = hex(e.target.value);
+    const code = $("#color-picker-panel code");
+    if (code) code.textContent = stagedColor;
+    preview();
+  }
+});
+async function normalizeUserImage(file) {
+  if (!file.type.startsWith("image/"))
+    throw Error("이미지 파일을 선택해주세요.");
+  if (file.size > 20 * 1024 * 1024)
+    throw Error("이미지 파일은 20MB 이하로 선택해주세요.");
+  const bitmap = await createImageBitmap(file);
+  try {
+    const max = 1440,
+      scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height)),
+      c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(bitmap.width * scale));
+    c.height = Math.max(1, Math.round(bitmap.height * scale));
+    c.getContext("2d").drawImage(bitmap, 0, 0, c.width, c.height);
+    return { data: c.toDataURL("image/jpeg", 0.84), name: file.name };
+  } finally {
+    bitmap.close();
+  }
+}
+$('[data-image-input="chat"]').addEventListener("change", async (e) => {
+  const file = e.currentTarget.files?.[0];
+  if (!file) return;
+  try {
+    s.images.chat = await normalizeUserImage(file);
+    persist();
+    render();
+    toast("채팅 배경을 적용했어요.");
+  } catch (err) {
+    toast("이미지를 불러오지 못했어요: " + err.message);
+  }
+  e.currentTarget.value = "";
+});
+document.addEventListener("click", (e) => {
+  const button = e.target.closest("[data-remove-image]");
+  if (!button) return;
+  const key = button.dataset.removeImage;
+  if (key !== "chat") return;
+  s.images.chat = null;
+  const input = $('[data-image-input="chat"]');
+  if (input) input.value = "";
+  persist();
+  render();
+  toast("업로드 이미지를 제거했어요.");
+});
+$("#installGuide").onclick = () => $("#install-modal").showModal();
+$("#install-modal .modal-close").onclick = () => $("#install-modal").close();
+$("#install-modal").addEventListener("click", (e) => {
+  if (e.target === $("#install-modal")) $("#install-modal").close();
+});
+document.querySelectorAll("[data-guide-tab]").forEach((tab) =>
+  tab.addEventListener("click", () => {
+    document.querySelectorAll("[data-guide-tab]").forEach((b) => {
+      b.classList.toggle("active", b === tab);
+      b.setAttribute("aria-selected", b === tab ? "true" : "false");
+    });
+    document
+      .querySelectorAll("[data-guide-panel]")
+      .forEach(
+        (panel) =>
+          (panel.hidden = panel.dataset.guidePanel !== tab.dataset.guideTab),
+      );
+  }),
+);
+$("#export").onclick = async () => {
+  const b = $("#export");
+  b.disabled = true;
+  try {
+    const result = await IOS_THEME_EXPORTER.build(current());
+    download(result.zip, result.name + ".ktheme");
+    toast(
+      `패키지 확인 완료 · ${result.report.images}개 이미지 · ZIP ${result.archiveCheck.fileCount}개 파일 검증`,
+    );
+  } catch (err) {
+    console.error(err);
+    toast("내보내기 실패: " + err.message);
+  } finally {
+    b.disabled = false;
+  }
+};
+$("#exportAndroid").onclick = exportAndroidApk;
+$("#reset").onclick = () => {
+  s = { ...DEFAULTS, images: { chat: null } };
+  activeKey = null;
+  stagedColor = null;
+  stagedPalette = null;
+  persist();
+  render();
+  toast("컬러 초안을 초기화했어요.");
+};
+window.THEME_READY = THEME_DESIGN.ready
+  .then((spec) => {
+    THEME_DESIGN.assertSupport("아이폰", IOS_THEME_EXPORTER);
+    THEME_DESIGN.assertSupport("안드로이드", ANDROID_THEME_EXPORTER);
+    Object.assign(DEFAULTS, spec.defaults);
+    defs = spec.colors.map(({ label, key }) => [label, key]);
+    s = THEME_DESIGN.normalize(stored);
+    const migrated =
+      stored.bubbleStyle &&
+      !Object.hasOwn(spec.bubble.styles, stored.bubbleStyle);
+    if (migrated) persist();
+    render();
+    for (const id of ["export", "exportAndroid", "reset"])
+      $("#" + id).disabled = false;
+    if (migrated)
+      toast(
+        "두 기기 공통 템플릿을 적용했어요. 이전 점선·물결은 둥근 모서리로 변경됐습니다.",
+      );
+    return spec;
+  })
+  .catch((error) => {
+    console.error(error);
+    toast(error.message + " 페이지를 새로고침해주세요.");
+  });

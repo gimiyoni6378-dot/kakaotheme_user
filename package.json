@@ -1,0 +1,14 @@
+{
+  "name": "talktheme-platform-checks",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "format": "prettier --write app.js theme-*.js ios-export.js android-project.js android-export.js tests/*.cjs android-apk-service/src/*.mjs android-apk-service/tests/*.js android-apk-service/build.mjs",
+    "format:check": "prettier --check app.js theme-*.js ios-export.js android-project.js android-export.js tests/*.cjs android-apk-service/src/*.mjs android-apk-service/tests/*.js android-apk-service/build.mjs"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "1.2.1",
+    "jsdom": "31.0.1",
+    "prettier": "3.6.2"
+  }
+}
