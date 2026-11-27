@@ -136,6 +136,7 @@ async function exportAndroidApk() {
     const project = await makeAndroidProjectZip(theme);
     androidButton('안드로이드 저장', '빌드 서버 연결 중');
     const session = await androidRequest(service + '/api/session', { method: 'POST' });
+    if (session.bubbleRendererVersion !== 2) throw Error('말풍선 빌드 서버가 업데이트 중이에요. 잠시 뒤 다시 저장해주세요.');
     const base = new URL(session.builderUrl);
     if (base.protocol !== 'https:' && base.hostname !== '127.0.0.1') throw Error('올바르지 않은 빌드 서버 주소입니다.');
     const expires = Number(session.expiresAt);

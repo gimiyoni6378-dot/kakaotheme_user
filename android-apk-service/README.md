@@ -64,6 +64,10 @@ Node 테스트는 출처/사전 요청/비활성화/동일 인스턴스 요청 �
 
 ## 참고
 
+말풍선 설정은 `talktheme-bubbles.json`의 제한된 색상·스타일 값만 받습니다. 서버가 네 개의 공식 말풍선 리소스 이름을 유지하면서 각진/둥근/점선은 Android shape, 물결은 반복 가장자리 이미지와 layer-list로 생성합니다. 업로드 XML이나 실행 코드는 받지 않습니다. 작은 9-patch 이미지의 점선까지 늘려 흐려지는 문제를 피하기 위한 처리이며, 카카오톡 실기기의 drawable 호환 및 짧은/긴/여러 줄 문장 적용은 별도 확인 대상입니다.
+
+아이폰은 2x/3x 이미지의 포인트 배율과 늘림 좌표를 맞추지만, 현재 공식 CSS의 좌표 기반 이미지 늘림으로는 긴 문장에서도 점선·물결 간격을 일정하게 반복하는 것을 보장하지 않습니다. 사이트에서도 이 제한을 안내하며 아이폰 패턴 문제를 완전히 해결한 것으로 표시하지 않습니다.
+
 - [Vercel Sandbox](https://vercel.com/docs/sandbox)
 - [Android 명령행 빌드와 서명](https://developer.android.com/build/building-cmdline)
 - [apksigner](https://developer.android.com/tools/apksigner)
